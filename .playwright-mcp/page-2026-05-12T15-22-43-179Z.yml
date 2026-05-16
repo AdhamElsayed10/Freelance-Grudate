@@ -1,0 +1,130 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - link "م مستقلين" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]: م
+        - generic [ref=e8]: مستقلين
+      - generic [ref=e9]:
+        - link "الرئيسية" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - text: الرئيسية
+        - link "الخدمات" [ref=e11] [cursor=pointer]:
+          - /url: /services
+          - text: الخدمات
+        - link "الباقات" [ref=e12] [cursor=pointer]:
+          - /url: /pricing
+          - text: الباقات
+        - link "انضم إلينا" [ref=e13] [cursor=pointer]:
+          - /url: /join
+          - text: انضم إلينا
+        - link "دخول" [ref=e14] [cursor=pointer]:
+          - /url: /login
+          - img [ref=e15]
+          - text: دخول
+  - main [ref=e18]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - link "العودة للرئيسية" [ref=e24] [cursor=pointer]:
+          - /url: /
+          - img [ref=e25]
+          - text: العودة للرئيسية
+        - heading "انضم إلينا" [level=1] [ref=e27]
+        - paragraph [ref=e28]: أنشئ حسابك وابدأ رحلتك مع مستقلين
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - button "مستخدم" [ref=e31] [cursor=pointer]
+          - button "شركة" [ref=e32] [cursor=pointer]
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: الاسم الكامل *
+            - generic [ref=e36]:
+              - img [ref=e37]
+              - textbox "أدخل اسمك الكامل" [ref=e40]
+          - generic [ref=e41]:
+            - generic [ref=e42]: البريد الإلكتروني *
+            - generic [ref=e43]:
+              - img [ref=e44]
+              - textbox "example@email.com" [ref=e47]
+          - generic [ref=e48]:
+            - generic [ref=e49]: التخصص *
+            - generic [ref=e50]:
+              - img [ref=e51]
+              - combobox [ref=e54] [cursor=pointer]:
+                - option "اختر تخصصك" [selected]
+                - option "تطوير الويب"
+                - option "تطوير الموبايل"
+                - option "التصميم الجرافيكي"
+                - option "التسويق الرقمي"
+                - option "الكتابة والترجمة"
+                - option "المونتاج والفيديو"
+                - option "إدارة المشاريع"
+                - option "أخرى"
+          - generic [ref=e55]:
+            - generic [ref=e56]: كلمة المرور *
+            - generic [ref=e57]:
+              - img [ref=e58]
+              - textbox "كلمة المرور" [ref=e61]
+          - generic [ref=e62]:
+            - generic [ref=e63]: الباقة
+            - generic [ref=e64]:
+              - button "مجانية" [ref=e65] [cursor=pointer]
+              - button "متكاملة" [ref=e66] [cursor=pointer]
+              - button "شاملة" [ref=e67] [cursor=pointer]
+          - generic [ref=e68]:
+            - generic [ref=e69]: المحافظة *
+            - generic [ref=e70]:
+              - img [ref=e71]
+              - combobox [ref=e74] [cursor=pointer]:
+                - option "اختر المحافظة" [selected]
+                - option "القاهرة"
+                - option "الجيزة"
+                - option "الإسكندرية"
+                - option "أسوان"
+                - option "الأقصر"
+                - option "المنصورة"
+                - option "طنطا"
+                - option "المنيا"
+                - option "بورسعيد"
+                - option "السويس"
+                - option "الإسماعيلية"
+                - option "دمنهور"
+                - option "بني سويف"
+                - option "الفيوم"
+                - option "سوهاج"
+          - button "إنشاء الحساب" [ref=e75] [cursor=pointer]
+          - paragraph [ref=e76]:
+            - text: لديك حساب بالفعل؟
+            - link "تسجيل الدخول" [ref=e77] [cursor=pointer]:
+              - /url: /login
+  - contentinfo [ref=e78]:
+    - generic [ref=e79]:
+      - generic [ref=e80]:
+        - generic [ref=e81]: م
+        - generic [ref=e82]: مستقلين
+      - paragraph [ref=e83]: منصة متكاملة لخدمات الفريلانسر في مصر والوطن العربي
+      - generic [ref=e84]:
+        - link "Twitter" [ref=e85] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=e86]
+        - link "LinkedIn" [ref=e88] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=e89]
+        - link "Instagram" [ref=e93] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=e94]
+        - link "Facebook" [ref=e97] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=e98]
+      - generic [ref=e100]:
+        - link "التأمين الطبي" [ref=e101] [cursor=pointer]:
+          - /url: /services/medical-insurance
+        - link "التأمين المالي" [ref=e102] [cursor=pointer]:
+          - /url: /services/financial-insurance
+        - link "الكورسات" [ref=e103] [cursor=pointer]:
+          - /url: /services/courses
+        - link "المطاعم" [ref=e104] [cursor=pointer]:
+          - /url: /services/restaurants
+        - link "الترفيه" [ref=e105] [cursor=pointer]:
+          - /url: /services/entertainment
+      - paragraph [ref=e106]: © 2025 مستقلين. جميع الحقوق محفوظة.
