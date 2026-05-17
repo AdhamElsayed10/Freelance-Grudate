@@ -414,6 +414,18 @@ const translations = {
     pricingNote: { ar: 'السعر يشمل الوصول لجميع خصومات الترفيه والأنشطة الاجتماعية.', en: 'Price includes access to all entertainment and social activity discounts.' },
   },
 
+  entertainmentTicker: {
+    heading: { ar: 'خصومات حصرية', en: 'Exclusive Discounts' },
+    items: [
+      { icon: 'gyms', ar: { title: 'الجيمات', desc: 'خصم يصل إلى 40% على اشتراكات الجيم' }, en: { title: 'Gyms', desc: 'Up to 40% off on gym subscriptions' } },
+      { icon: 'clubs', ar: { title: 'النوادي', desc: 'خصومات على النوادي الرياضية والاجتماعية' }, en: { title: 'Clubs', desc: 'Discounts on sports and social clubs' } },
+      { icon: 'cinemas', ar: { title: 'السينما', desc: 'تذاكر سينما بخصم يصل إلى 30%' }, en: { title: 'Cinemas', desc: 'Cinema tickets with up to 30% off' } },
+      { icon: 'malls', ar: { title: 'المولات', desc: 'تخفيضات في كبرى المولات والمتاجر' }, en: { title: 'Malls', desc: 'Discounts at major malls and stores' } },
+      { icon: 'trips', ar: { title: 'الرحلات', desc: 'رحلات منظمة بأسعار مخفضة للأعضاء' }, en: { title: 'Trips', desc: 'Organized trips at discounted prices' } },
+      { icon: 'parks', ar: { title: 'المنتزهات', desc: 'دخول مجاني ومخفض للمنتزهات الترفيهية' }, en: { title: 'Parks', desc: 'Free and discounted entry to amusement parks' } },
+    ],
+  },
+
   serviceDetail: {
     backToServices: { ar: 'الخدمات', en: 'Services' },
   },
@@ -439,6 +451,7 @@ const translations = {
     browseServices: { ar: 'تصفح الخدمات', en: 'Browse Services' },
     noServices: { ar: 'لم تشترك في أي خدمة بعد', en: 'Not subscribed to any service yet' },
     quickActions: { ar: 'إجراءات سريعة', en: 'Quick Actions' },
+    details: { ar: 'التفاصيل', en: 'Details' },
     myServices: { ar: 'خدماتي المشترك فيها', en: 'My Subscribed Services' },
     enrollActive: { ar: 'نشط', en: 'Active' },
     enrollCancelled: { ar: 'ملغي', en: 'Cancelled' },
@@ -452,6 +465,24 @@ const translations = {
     monthlyPrice: { ar: 'السعر الشهري', en: 'Monthly Price' },
     yearlyPrice: { ar: 'السعر السنوي', en: 'Yearly Price' },
     save: { ar: 'وفّر', en: 'Save' },
+    prices: { ar: 'الأسعار', en: 'Prices' },
+    memberPrice: { ar: 'لأعضاء مستقلين', en: 'Mustakleen Members' },
+    nonMemberPrice: { ar: 'للغير مشتركين', en: 'Non-Members' },
+    customerReviews: { ar: 'آراء العملاء', en: 'Customer Reviews' },
+    rating: { ar: 'تقييم', en: 'Rating' },
+    reviewsCount: { ar: 'تقييم', en: 'Reviews' },
+    noReviews: { ar: 'لا توجد تقييمات بعد', en: 'No reviews yet' },
+    free: { ar: 'مجاني', en: 'Free' },
+    egp: { ar: 'ج.م', en: 'EGP' },
+    confirmSubscribe: { ar: 'تأكيد الاشتراك', en: 'Confirm Subscription' },
+    yourPlan: { ar: 'باقتك الحالية', en: 'Your Current Plan' },
+    subscriptionSummary: { ar: 'ملخص الاشتراك', en: 'Subscription Summary' },
+    confirmPayment: { ar: 'تأكيد الدفع', en: 'Confirm & Subscribe' },
+    totalDue: { ar: 'المبلغ المستحق', en: 'Total Due' },
+    includedInPlan: { ar: 'مشمول في باقتك', en: 'Included in your plan' },
+    serviceName: { ar: 'اسم الخدمة', en: 'Service Name' },
+    services: { ar: 'الخدمات', en: 'Services' },
+    processing: { ar: 'جاري المعالجة...', en: 'Processing...' },
     back: { ar: 'رجوع', en: 'Back' },
     coverages: { ar: 'التغطيات المتاحة', en: 'Available Coverages' },
     coverageTable: { ar: 'جدول التغطيات', en: 'Coverage Table' },
@@ -732,6 +763,7 @@ const translations = {
     free: { ar: 'مجاني', en: 'Free' },
     premium: { ar: 'متكامل', en: 'Premium' },
     elite: { ar: 'شامل', en: 'Elite' },
+    upgradeRequired: { ar: 'هذا الخصم يتطلب باقة أعلى. قم بترقية باقتك للوصول إليه.', en: 'This discount requires a higher plan. Upgrade your plan to access it.' },
   },
 
   userCards: {
@@ -777,6 +809,20 @@ const translations = {
 // Used by td() in LanguageContext. When lang='en', looks up the English value.
 // When lang='ar', returns the original Arabic value (no lookup needed).
 translations.dataTranslations = {
+
+  // ── Restaurant cuisines ───────────────────────────────────────
+  cuisines: {
+    'مأكولات شرقية': 'Oriental Cuisine',
+    'مشروبات وحلويات': 'Beverages & Desserts',
+    'بيتزا ومكرونة': 'Pizza & Pasta',
+    'مأكولات مصرية': 'Egyptian Cuisine',
+    'سوشي وياباني': 'Sushi & Japanese',
+    'مشروبات ساخنة': 'Hot Beverages',
+    'مأكولات بحرية': 'Seafood',
+    'سندويتشات ووجبات سريعة': 'Sandwiches & Fast Food',
+    'حلويات ومشروبات': 'Desserts & Drinks',
+    'مأكولات عالمية': 'International Cuisine',
+  },
 
   // ── Governorates ──────────────────────────────────────────────
   governorates: {
@@ -958,6 +1004,27 @@ translations.dataTranslations = {
     'صيدلية الشفاء': 'Al-Shifa Pharmacy',
     'جيم البطل': 'Al-Batal Gym',
     'مطعم الذواق': 'Al-Zawaq Restaurant',
+    'كافيه الروضة': 'Al-Rawda Cafe',
+    'بيتزا نابولي': 'Napoli Pizza',
+    'مطعم كشري أبو طارق': 'Abou Tarek Koshary',
+    'سوشي يامي': 'Sushi Yummy',
+    'كافيه بون': 'Bon Cafe',
+    'مطعم السمكة': 'Al-Samaka Restaurant',
+    'مطعم الشاورما الملكي': 'Al-Malaki Shawarma',
+    'كافيه لافاندير': 'Lavender Cafe',
+    'مطعم ميدوزا': 'Medusa Restaurant',
+    'جيم جولدز الميراج': 'Gold\'s Gym Al-Mirage',
+    'فيزيكال سبورت': 'Physical Sport',
+    'نادي وادي دجلة': 'Wadi Degla Club',
+    'نادي الجزيرة الرياضي': 'Gezyra Sporting Club',
+    'سينما فوكس مصر': 'Fox Cinema Egypt',
+    'سينما سيتي سنتر': 'City Centre Cinema',
+    'مول كايرو فيستيفال': 'Cairo Festival Mall',
+    'مول سان ستيفانو': 'San Stefano Mall',
+    'رحلة الأقصر وأسوان': 'Luxor & Aswan Trip',
+    'رحلة الغردقة': 'Hurghada Trip',
+    'دريم بارك': 'Dream Park',
+    'فاميلي لاند': 'Family Land',
     'نادي السعادة': 'Al-Saada Club',
     'مستشفى النيل': 'Nile Hospital',
   },

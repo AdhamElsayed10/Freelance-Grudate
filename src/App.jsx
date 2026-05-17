@@ -13,6 +13,7 @@ import Courses from './pages/services/Courses'
 import Restaurants from './pages/services/Restaurants'
 import Entertainment from './pages/services/Entertainment'
 import Services from './pages/Services'
+import ServiceDetail from './pages/services/ServiceDetail'
 
 // Dashboard pages
 import UserDashboard from './pages/dashboard/UserDashboard'
@@ -63,6 +64,8 @@ function App() {
           <Route path="/services/courses" element={<PageWrapper><Courses /></PageWrapper>} />
           <Route path="/services/restaurants" element={<PageWrapper><Restaurants /></PageWrapper>} />
           <Route path="/services/entertainment" element={<PageWrapper><Entertainment /></PageWrapper>} />
+          <Route path="/services/medical-center/:id" element={<PageWrapper><ServiceDetail /></PageWrapper>} />
+          <Route path="/services/bank/:id" element={<PageWrapper><ServiceDetail /></PageWrapper>} />
 
           {/* User Dashboard routes */}
           <Route path="/dashboard/user" element={<ProtectedRoute requiredRole="user"><PageWrapper><UserDashboard /></PageWrapper></ProtectedRoute>} />

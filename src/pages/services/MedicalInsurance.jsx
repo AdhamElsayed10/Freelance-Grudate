@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../../context/LanguageContext'
 import {
-  getAllMedicalCenters, getMedicalCentersByGovernorate, getGovernorates,
-  enrollUserInService, getUserEnrollments, cancelEnrollment,
+  getAllMedicalCenters, getGovernorates,
 } from '../../data/db'
 import {
-  MapPin, Phone, Star, Shield, Check, HelpCircle,
-  ArrowLeft, CreditCard, Stethoscope, X, CheckCircle, Building2
+  MapPin, Phone, Star, Check, HelpCircle,
+  ArrowLeft, CreditCard, Building2
 } from 'lucide-react'
 import Breadcrumb from '../../components/Breadcrumb'
 import FAQ from '../../components/FAQ'
@@ -25,43 +23,22 @@ const faqItems = (tf) => [
 ]
 
 export default function MedicalInsurance() {
-  const { user } = useAuth()
-  const { t, tf, td, lang } = useLanguage()
+  const navigate = useNavigate()
+  const { t, tf, td } = useLanguage()
   const [centers, setCenters] = useState([])
   const [governorates, setGovernorates] = useState([])
   const [filterGov, setFilterGov] = useState('all')
-  const [enrollments, setEnrollments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     setGovernorates(getGovernorates())
     setCenters(getAllMedicalCenters())
-    if (user) setEnrollments(getUserEnrollments(user.id))
     setLoading(false)
-  }, [user])
+  }, [])
 
   const filtered = filterGov === 'all'
     ? centers
     : centers.filter(c => c.governorate === filterGov)
-
-  const medicalEnrollment = enrollments.find(e => e.service_type === 'medical' && e.status === 'active')
-
-  const handleEnroll = (center) => {
-    if (!user) return
-    enrollUserInService(user.id, { service_type: 'medical', center_id: center.id })
-    setEnrollments(getUserEnrollments(user.id))
-    setMsg(`${t('medicalInsurance', 'enrollSuccess')} ${td('medicalCenters', center.name, 'name')}`)
-    setTimeout(() => setMsg(''), 3000)
-  }
-
-  const handleCancel = () => {
-    if (!medicalEnrollment) return
-    cancelEnrollment(medicalEnrollment.id)
-    setEnrollments(getUserEnrollments(user.id))
-    setMsg(t('medicalInsurance', 'cancelSuccess'))
-    setTimeout(() => setMsg(''), 3000)
-  }
 
   const breadcrumbItems = [
     { label: t('medicalInsurance', 'breadcrumbServices'), href: '/services' },
@@ -95,13 +72,11 @@ export default function MedicalInsurance() {
               <p className="text-goldLight/70 leading-relaxed mb-8 text-lg">
                 {t('medicalInsurance', 'heroText')}
               </p>
-              {!user && (
-                <Link to="/join"
-                  className="btn-primary text-dark px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center gap-3 shadow-xl shadow-gold/20">
-                  <CreditCard size={20} />
-                  {t('medicalInsurance', 'cta')}
-                </Link>
-              )}
+              <Link to="/join"
+                className="btn-primary text-dark px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center gap-3 shadow-xl shadow-gold/20">
+                <CreditCard size={20} />
+                {t('medicalInsurance', 'cta')}
+              </Link>
             </div>
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gold/20">
@@ -113,36 +88,6 @@ export default function MedicalInsurance() {
           </motion.div>
         </div>
       </section>
-
-      {/* Message toast */}
-      {msg && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-xl font-bold flex items-center gap-2">
-          <CheckCircle size={20} /> {msg}
-        </div>
-      )}
-
-      {/* Current enrollment banner */}
-      {medicalEnrollment && (
-        <section className="py-6 bg-cream border-b border-gold/10">
-          <div className="container mx-auto px-6">
-            <div className="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-emerald-500" size={28} />
-                <div>
-                  <p className="font-bold text-dark">{t('medicalInsurance', 'enrolled')}</p>
-                  <p className="text-dark/60 text-sm">
-                    {td('medicalCenters', medicalEnrollment.center?.name, 'name') || t('medicalInsurance', 'medicalCenter')} - {new Date(medicalEnrollment.enrolled_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}
-                  </p>
-                </div>
-              </div>
-              <button onClick={handleCancel}
-                className="bg-red-50 text-red-500 px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-all">
-                <X size={16} /> {t('medicalInsurance', 'cancelEnrollment')}
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Centers list */}
       <section className="py-16 bg-cream">
@@ -169,7 +114,8 @@ export default function MedicalInsurance() {
             <div className="grid md:grid-cols-2 gap-6">
               {filtered.map((center, i) => (
                 <motion.div key={center.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-sm hover:shadow-md transition-all">
+                  onClick={() => navigate(`/services/medical-center/${center.id}`)}
+                  className="bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-sm hover:shadow-md transition-all cursor-pointer">
                   <div className="h-48 overflow-hidden">
                     <img src={center.img_url} alt={td('medicalCenters', center.name, 'name')} className="w-full h-full object-cover" />
                   </div>
@@ -197,24 +143,13 @@ export default function MedicalInsurance() {
                         <span key={j} className="bg-gold/5 text-gold text-xs px-3 py-1.5 rounded-full font-semibold">{td('services_offered', s)}</span>
                       ))}
                     </div>
-                    {user ? (
-                      medicalEnrollment?.center_id === center.id ? (
-                        <div className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
-                          <CheckCircle size={18} /> {t('medicalInsurance', 'enrolledCenter')}
-                        </div>
-                      ) : (
-                        <button onClick={() => handleEnroll(center)}
-                          className="w-full bg-dark text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-darkLight transition-all">
-                          <Stethoscope size={18} />
-                          {t('medicalInsurance', 'enrollButton')}
-                        </button>
-                      )
-                    ) : (
-                      <Link to="/join"
-                        className="block w-full bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-3 rounded-xl font-bold text-sm text-center hover:shadow-lg transition-all">
-                        {t('medicalInsurance', 'registerNow')}
-                      </Link>
-                    )}
+                    <Link
+                      to={`/services/medical-center/${center.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block w-full bg-dark text-white py-3 rounded-xl font-bold text-sm text-center hover:bg-darkLight transition-all"
+                    >
+                      {t('common', 'details')}
+                    </Link>
                   </div>
                 </motion.div>
               ))}

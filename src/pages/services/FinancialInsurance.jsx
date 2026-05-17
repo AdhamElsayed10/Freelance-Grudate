@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../../context/LanguageContext'
 import {
-  getAllBanks, getBanksByGovernorate, getGovernorates,
-  enrollUserInService, getUserEnrollments, cancelEnrollment,
+  getAllBanks, getGovernorates,
 } from '../../data/db'
 import {
-  MapPin, Phone, Star, Shield, Check, HelpCircle,
-  ArrowLeft, CreditCard, Landmark, X, CheckCircle, Building2
+  MapPin, Phone, Star, Check, HelpCircle, CreditCard,
+  ArrowLeft, Building2
 } from 'lucide-react'
 import Breadcrumb from '../../components/Breadcrumb'
 import FAQ from '../../components/FAQ'
@@ -25,43 +23,22 @@ const faqItems = (tf) => [
 ]
 
 export default function FinancialInsurance() {
-  const { user } = useAuth()
-  const { t, tf, td, lang } = useLanguage()
+  const navigate = useNavigate()
+  const { t, tf, td } = useLanguage()
   const [banks, setBanks] = useState([])
   const [governorates, setGovernorates] = useState([])
   const [filterGov, setFilterGov] = useState('all')
-  const [enrollments, setEnrollments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     setGovernorates(getGovernorates())
     setBanks(getAllBanks())
-    if (user) setEnrollments(getUserEnrollments(user.id))
     setLoading(false)
-  }, [user])
+  }, [])
 
   const filtered = filterGov === 'all'
     ? banks
     : banks.filter(b => b.governorate === filterGov)
-
-  const financialEnrollment = enrollments.find(e => e.service_type === 'financial' && e.status === 'active')
-
-  const handleEnroll = (bank) => {
-    if (!user) return
-    enrollUserInService(user.id, { service_type: 'financial', bank_id: bank.id })
-    setEnrollments(getUserEnrollments(user.id))
-    setMsg(`${t('financialInsurance', 'enrollSuccess')} ${td('banks', bank.name, 'name')}`)
-    setTimeout(() => setMsg(''), 3000)
-  }
-
-  const handleCancel = () => {
-    if (!financialEnrollment) return
-    cancelEnrollment(financialEnrollment.id)
-    setEnrollments(getUserEnrollments(user.id))
-    setMsg(t('financialInsurance', 'cancelSuccess'))
-    setTimeout(() => setMsg(''), 3000)
-  }
 
   const breadcrumbItems = [
     { label: t('financialInsurance', 'breadcrumbServices'), href: '/services' },
@@ -90,6 +67,16 @@ export default function FinancialInsurance() {
                 <Star className="text-gold" size={14} />
                 <span className="text-gold text-sm font-bold">{t('common', 'premiumService')}</span>
               </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4">{t('financialInsurance', 'heading')}</h1>
+              <p className="text-xl text-goldLight/80 mb-6">{t('financialInsurance', 'subtitle')}</p>
+              <p className="text-goldLight/70 leading-relaxed mb-8 text-lg">
+                {t('financialInsurance', 'heroText')}
+              </p>
+              <Link to="/join"
+                className="btn-primary text-dark px-8 py-4 rounded-2xl font-bold text-lg inline-flex items-center gap-3 shadow-xl shadow-gold/20">
+                <CreditCard size={20} />
+                {t('financialInsurance', 'cta')}
+              </Link>
             </div>
             <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-gold/20">
@@ -101,36 +88,6 @@ export default function FinancialInsurance() {
           </motion.div>
         </div>
       </section>
-
-      {/* Message toast */}
-      {msg && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-xl font-bold flex items-center gap-2">
-          <CheckCircle size={20} /> {msg}
-        </div>
-      )}
-
-      {/* Current enrollment banner */}
-      {financialEnrollment && (
-        <section className="py-6 bg-cream border-b border-gold/10">
-          <div className="container mx-auto px-6">
-            <div className="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="text-emerald-500" size={28} />
-<div>
-                  <p className="font-bold text-dark">{t('financialInsurance', 'enrolled')}</p>
-                  <p className="text-dark/60 text-sm">
-                    {td('banks', financialEnrollment.bank?.name, 'name') || t('services', 'bank')} - {new Date(financialEnrollment.enrolled_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}
-                  </p>
-                </div>
-              </div>
-              <button onClick={handleCancel}
-                className="bg-red-50 text-red-500 px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-red-100 transition-all">
-                <X size={16} /> {t('financialInsurance', 'cancelEnrollment')}
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Banks list */}
       <section className="py-16 bg-cream">
@@ -157,7 +114,8 @@ export default function FinancialInsurance() {
             <div className="grid md:grid-cols-2 gap-6">
               {filtered.map((bank, i) => (
                 <motion.div key={bank.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-sm hover:shadow-md transition-all">
+                  onClick={() => navigate(`/services/bank/${bank.id}`)}
+                  className="bg-white rounded-2xl overflow-hidden border border-gold/10 shadow-sm hover:shadow-md transition-all cursor-pointer">
                   <div className="h-48 overflow-hidden">
                     <img src={bank.img_url} alt={td('banks', bank.name, 'name')} className="w-full h-full object-cover" />
                   </div>
@@ -185,24 +143,13 @@ export default function FinancialInsurance() {
                         <span key={j} className="bg-gold/5 text-gold text-xs px-3 py-1.5 rounded-full font-semibold">{td('services_offered', s)}</span>
                       ))}
                     </div>
-                    {user ? (
-                      financialEnrollment?.bank_id === bank.id ? (
-                        <div className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
-                          <CheckCircle size={18} /> {t('financialInsurance', 'enrolledBank')}
-                        </div>
-                      ) : (
-                        <button onClick={() => handleEnroll(bank)}
-                          className="w-full bg-dark text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-darkLight transition-all">
-                          <Landmark size={18} />
-                          {t('financialInsurance', 'enrollButton')}
-                        </button>
-                      )
-                    ) : (
-                      <Link to="/join"
-                        className="block w-full bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-3 rounded-xl font-bold text-sm text-center hover:shadow-lg transition-all">
-                        {t('financialInsurance', 'registerNow')}
-                      </Link>
-                    )}
+                    <Link
+                      to={`/services/bank/${bank.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block w-full bg-dark text-white py-3 rounded-xl font-bold text-sm text-center hover:bg-darkLight transition-all"
+                    >
+                      {t('common', 'details')}
+                    </Link>
                   </div>
                 </motion.div>
               ))}

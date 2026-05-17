@@ -1,13 +1,35 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check, ArrowLeft, Shield, HelpCircle, CreditCard, Star } from 'lucide-react'
+import { Check, ArrowLeft, Shield, HelpCircle, CreditCard, Star, Dumbbell, Building2, Clapperboard, Store, Mountain, TreePine } from 'lucide-react'
 import Breadcrumb from './Breadcrumb'
 import FAQ from './FAQ'
 import { useLanguage } from '../context/LanguageContext'
 
-export default function ServiceDetail({ service }) {
-  const { t, tf } = useLanguage()
+/* ── StarRating component ── */
+function StarRating({ rating }) {
+  const stars = Math.round(rating)
+  return (
+    <div className="flex items-center gap-0.5" dir="ltr">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Star key={s} size={12} className={s <= stars ? 'text-gold fill-gold' : 'text-gray-300'} />
+      ))}
+    </div>
+  )
+}
+
+/* ── Ticker / marquee icons map ── */
+const tickerIcons = {
+  gyms: <Dumbbell size={22} className="text-dark" />,
+  clubs: <Building2 size={22} className="text-dark" />,
+  cinemas: <Clapperboard size={22} className="text-dark" />,
+  malls: <Store size={22} className="text-dark" />,
+  trips: <Mountain size={22} className="text-dark" />,
+  parks: <TreePine size={22} className="text-dark" />,
+}
+
+export default function ServiceDetail({ service, ticker, venues }) {
+  const { t, tf, td } = useLanguage()
 
   if (!service) return null
 
@@ -93,6 +115,71 @@ export default function ServiceDetail({ service }) {
           </motion.div>
         </div>
       </section>
+
+      {/* Ticker Section — discounts marquee (entertainment page) */}
+      {(ticker && ticker.length > 0 || venues && venues.length > 0) && (
+        <section className="py-16 bg-cream overflow-hidden border-t border-gold/5">
+          <div className="container mx-auto px-6 mb-10">
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 mb-3">
+                <Star size={24} className="text-gold" />
+                <h2 className="text-2xl md:text-3xl font-bold text-dark">{t('entertainmentTicker', 'heading')}</h2>
+              </div>
+              <div className="w-24 h-1 bg-gradient-to-r from-gold to-goldLight mx-auto rounded-full" />
+            </motion.div>
+          </div>
+          <style>{`
+            @keyframes ticker-scroll {
+              0%   { transform: translateX(0); }
+              100% { transform: translateX(-100%); }
+            }
+            .ticker-track {
+              display: flex;
+              width: max-content;
+              animation: ticker-scroll 45s linear infinite;
+            }
+            .ticker-track:hover {
+              animation-play-state: paused;
+            }
+          `}</style>
+          <div className="relative overflow-hidden w-full">
+            <div className="ticker-track">
+              {venues && venues.length > 0 ? venues.map((v) => (
+                <div key={v.id} className="flex-shrink-0 w-64 mx-3 bg-white rounded-2xl border border-gold/10 shadow-sm hover:shadow-md hover:border-gold/30 transition-all overflow-hidden">
+                  <div className="h-36 overflow-hidden relative">
+                    <img src={v.img_url} alt={td('companies', v.name)} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 right-2 bg-gradient-to-l from-gold to-goldLight text-dark text-xs font-bold px-2.5 py-1 rounded-full shadow">
+                      خصم {v.discount_percent}
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-bold text-dark text-sm mb-1 truncate">{td('companies', v.name)}</h4>
+                    <p className="text-dark/40 text-xs mb-2">{td('governorates', v.governorate)}</p>
+                    <div className="flex items-center justify-between">
+                      <StarRating rating={v.rating} />
+                      <span className="text-xs font-bold text-gold">{v.rating}</span>
+                    </div>
+                  </div>
+                </div>
+              )) : ticker.map((item, i) => (
+                <div key={i} className="flex-shrink-0 w-52 mx-3 bg-white rounded-2xl border border-gold/10 shadow-sm p-5 text-center hover:shadow-md hover:border-gold/30 transition-all">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-gold to-goldLight rounded-xl flex items-center justify-center">
+                    {tickerIcons[item.icon] || <Star size={22} className="text-dark" />}
+                  </div>
+                  <h4 className="font-bold text-dark text-sm mb-1">{item.title}</h4>
+                  <p className="text-dark/50 text-xs leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="py-20 bg-cream">

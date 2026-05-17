@@ -7,6 +7,9 @@ import BackButton from '../../components/BackButton'
 import { getApprovedDiscounts, getGovernorates, incrementDiscountUses, recordScan } from '../../data/db'
 import { Search, MapPin, Tag, Building2, Percent, CheckCircle, QrCode } from 'lucide-react'
 
+// Tier hierarchy: higher tier includes lower tiers
+const TIER_LEVEL = { free: 1, premium: 2, elite: 3 }
+
 export default function DiscountsBrowse() {
   const { user, refreshUser } = useAuth()
   const { t, td, lang } = useLanguage()
@@ -18,6 +21,8 @@ export default function DiscountsBrowse() {
   const [filterGov, setFilterGov] = useState(user?.governorate || 'all')
   const [scannedId, setScannedId] = useState(null)
 
+  const userTier = user?.plan ? TIER_LEVEL[user.plan] || 0 : 3
+
   useEffect(() => {
     setDiscounts(getApprovedDiscounts())
     setGovernorates(getGovernorates())
@@ -28,12 +33,19 @@ export default function DiscountsBrowse() {
     if (filterTier !== 'all' && d.tier !== filterTier) return false
     if (filterGov !== 'all' && d.city !== filterGov) return false
     if (search && !d.name.includes(search) && !d.company_name.includes(search) && !d.city.includes(search)) return false
+    // Only show discounts the user's plan tier can access
+    if (userTier < (TIER_LEVEL[d.tier] || 0)) return false
     return true
   })
 
   const handleScan = (discount) => {
     if (!user) {
       alert(t('discountsBrowse', 'loginRequired'))
+      return
+    }
+    // Block scanning discounts above user's plan tier
+    if (TIER_LEVEL[user.plan] < TIER_LEVEL[discount.tier]) {
+      alert(t('discountsBrowse', 'upgradeRequired'))
       return
     }
     incrementDiscountUses(discount.id)

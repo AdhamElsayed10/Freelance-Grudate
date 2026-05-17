@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import BackButton from '../../components/BackButton'
 import { getUserEnrollments } from '../../data/db'
-import { QrCode, Wallet, CreditCard, Clock, TrendingUp, Sparkles, ShieldAlert, Stethoscope, Landmark } from 'lucide-react'
+import { QrCode, Wallet, CreditCard, Clock, TrendingUp, Sparkles, Stethoscope, Landmark } from 'lucide-react'
 
 export default function UserDashboard() {
   const { user } = useAuth()
@@ -48,20 +48,6 @@ export default function UserDashboard() {
             <h1 className="text-3xl font-bold text-dark mb-2">{t('dashboard', 'welcome')} {td('users', user.name)} 👋</h1>
             <p className="text-dark/60">{t('dashboard', 'overview')}</p>
           </motion.div>
-
-          {/* Free plan upgrade banner */}
-          {user.plan === 'free' && (
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8 bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <ShieldAlert className="text-gold" size={28} />
-                <div>
-                  <p className="font-bold text-dark text-lg">{t('dashboard', 'upgradeBanner')}</p>
-                  <p className="text-dark/60 text-sm">{t('dashboard', 'upgradeDesc')}</p>
-                </div>
-              </div>
-              <Link to="/pricing" className="btn-primary text-dark px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap">{t('dashboard', 'upgradeBtn')}</Link>
-            </motion.div>
-          )}
 
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
