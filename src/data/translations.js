@@ -524,6 +524,8 @@ const translations = {
     memberId: { ar: 'رقم العضوية', en: 'Member ID' },
     fullName: { ar: 'الاسم الكامل', en: 'Full Name' },
     email: { ar: 'البريد الإلكتروني', en: 'Email' },
+    phone: { ar: 'رقم الهاتف', en: 'Phone Number' },
+    nationalId: { ar: 'رقم القومي', en: 'National ID' },
     specialty: { ar: 'التخصص', en: 'Specialty' },
     governorate: { ar: 'المحافظة', en: 'Governorate' },
     password: { ar: 'كلمة المرور', en: 'Password' },
