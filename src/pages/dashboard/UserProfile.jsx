@@ -5,13 +5,13 @@ import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import BackButton from '../../components/BackButton'
 import { updateUser, getGovernorates } from '../../data/db'
-import { User, Mail, Briefcase, Lock, Calendar, Award, MapPin, Pencil } from 'lucide-react'
+import { User, Mail, Briefcase, Lock, Calendar, Award, MapPin, Pencil, Phone } from 'lucide-react'
 
 export default function UserProfile() {
   const { user, refreshUser } = useAuth()
   const { t, td, lang } = useLanguage()
   const [governorates, setGovernorates] = useState([])
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', job: user?.job || '', password: user?.password || '', governorate: user?.governorate || '' })
+  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', nationalId: user?.nationalId || '', job: user?.job || '', password: user?.password || '', governorate: user?.governorate || '' })
   const [saved, setSaved] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
 
@@ -32,7 +32,7 @@ export default function UserProfile() {
 
   const toggleEdit = () => {
     if (isEditing) {
-      setForm({ name: user?.name || '', email: user?.email || '', job: user?.job || '', password: user?.password || '', governorate: user?.governorate || '' })
+      setForm({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', nationalId: user?.nationalId || '', job: user?.job || '', password: user?.password || '', governorate: user?.governorate || '' })
     }
     setIsEditing(!isEditing)
   }
@@ -100,11 +100,25 @@ export default function UserProfile() {
                     <input type="text" name="name" value={!isEditing ? (td('users', form.name) || form.name) : form.name} onChange={handleChange} disabled={!isEditing} className="w-full bg-cream border border-gold/20 rounded-xl px-12 py-3.5 text-dark outline-none focus:border-gold/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed" />
                   </div>
                 </div>
-                <div>
+                 <div>
                   <label className="block text-dark font-semibold mb-2 text-sm">{t('userProfile', 'email')}</label>
                   <div className="relative">
                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
                     <input type="email" name="email" value={form.email} onChange={handleChange} disabled={!isEditing} className="w-full bg-cream border border-gold/20 rounded-xl px-12 py-3.5 text-dark outline-none focus:border-gold/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-dark font-semibold mb-2 text-sm">{t('userProfile', 'phone')}</label>
+                  <div className="relative">
+                    <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
+                    <input type="tel" name="phone" value={form.phone} onChange={handleChange} disabled={!isEditing} className="w-full bg-cream border border-gold/20 rounded-xl px-12 py-3.5 text-dark outline-none focus:border-gold/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-dark font-semibold mb-2 text-sm">{t('userProfile', 'nationalId')}</label>
+                  <div className="relative">
+                    <User className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
+                    <input type="text" name="nationalId" value={form.nationalId} onChange={handleChange} disabled={!isEditing} className="w-full bg-cream border border-gold/20 rounded-xl px-12 py-3.5 text-dark outline-none focus:border-gold/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed" />
                   </div>
                 </div>
                 <div>
