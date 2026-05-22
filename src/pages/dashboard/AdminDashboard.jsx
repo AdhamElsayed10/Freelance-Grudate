@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { getStats, getAllUserScans, findUserById } from '../../data/db'
 import { useLanguage } from '../../context/LanguageContext'
 import BackButton from '../../components/BackButton'
-import { Users, Building2, Tags, Clock, ScanLine, DollarSign, ArrowLeft } from 'lucide-react'
+import { Users, Building2, Tags, DollarSign, ArrowLeft } from 'lucide-react'
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage()
@@ -20,14 +20,9 @@ export default function AdminDashboard() {
 
   if (!stats) return null
 
-  const catLabels = { medical: t('adminDiscounts', 'medical'), gym: t('adminDiscounts', 'sports'), food: t('adminDiscounts', 'restaurants'), fun: t('adminDiscounts', 'entertainment') }
-
   const statCards = [
     { label: t('adminDashboard', 'totalUsers'), value: stats.totalUsers, icon: Users, href: '/dashboard/admin/users', color: 'text-blue-500' },
     { label: t('adminDashboard', 'totalCompanies'), value: stats.totalCompanies, icon: Building2, href: '/dashboard/admin/companies', color: 'text-orange-500' },
-    { label: t('adminDashboard', 'approvedDiscounts'), value: stats.approvedDiscounts, icon: Tags, href: '/dashboard/admin/discounts', color: 'text-emerald-500' },
-    { label: t('adminDashboard', 'pendingDiscounts'), value: stats.pendingDiscounts, icon: Clock, href: '/dashboard/admin/discounts', color: 'text-yellow-500' },
-    { label: t('adminDashboard', 'totalScans'), value: stats.totalScans, icon: ScanLine, color: 'text-purple-500' },
     { label: t('adminDashboard', 'revenue'), value: `${stats.totalRevenue} ${t('pricing', 'egp')}`, icon: DollarSign, color: 'text-gold' },
   ]
 
@@ -42,7 +37,7 @@ export default function AdminDashboard() {
             <p className="text-dark/60 mb-8">{t('adminDashboard', 'subtitle')}</p>
 
             {/* Stats grid */}
-            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+            <div className="grid md:grid-cols-3 gap-4 mb-12">
               {statCards.map((s, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                   {s.href ? (
