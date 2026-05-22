@@ -85,9 +85,9 @@ export function AuthProvider({ children }) {
     return { error: 'unknown_role' }
   }, [])
 
-  const signup = useCallback(({ name, email, job, password, plan, role, governorate, center_id, bank_id }) => {
+  const signup = useCallback(({ name, email, phone, nationalId, job, password, plan, role, governorate, center_id, bank_id }) => {
     if (role === 'user') {
-      const result = createUser({ name, email, job, password, plan, governorate })
+      const result = createUser({ name, email, phone, nationalId, job, password, plan, governorate })
       if (result.error) return { error: result.error }
       // Enroll in selected services if elite/premium plan with chosen center/bank
       if (result.user && (center_id || bank_id)) {

@@ -26,18 +26,20 @@ mermaid.initialize({
   },
 });
 const { svg } = await mermaid.render('erd-svg', `erDiagram
-  USERS {
-    string id PK "FL-YEAR-XXXX"
-    string name
-    string email UK
-    string job
-    string password
-    string plan "free|premium|elite"
-    int scans
-    float saved
-    timestamp join_date
-    int points
-  }
+    USERS {
+     string id PK "FL-YEAR-XXXX"
+     string name
+     string email UK
+     string phone
+     string nationalId
+     string job
+     string password
+     string plan "free|premium|elite"
+     int scans
+     float saved
+     timestamp join_date
+     int points
+   }
   COMPANIES {
     string id PK "CO-timestamp"
     string name

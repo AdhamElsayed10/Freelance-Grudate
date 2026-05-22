@@ -40,11 +40,13 @@ function futureDate(monthsAhead) {
 // ── default seed data ──────────────────────────────────────
 function seedData() {
   return {
-    users: [
+     users: [
       {
         id: 'FL-2026-0001',
         name: 'أحمد محمد',
         email: 'ahmed@example.com',
+        phone: '01012345678',
+        nationalId: '29801151234567',
         job: 'تطوير الويب',
         password: '123456',
         plan: 'elite',
@@ -58,6 +60,8 @@ function seedData() {
         id: 'FL-2026-0002',
         name: 'سارة علي',
         email: 'sara@example.com',
+        phone: '01123456789',
+        nationalId: '30002201234568',
         job: 'التصميم الجرافيكي',
         password: '123456',
         plan: 'premium',
@@ -71,6 +75,8 @@ function seedData() {
         id: 'FL-2026-0003',
         name: 'خالد عمر',
         email: 'khalid@example.com',
+        phone: '01234567890',
+        nationalId: '30205101234569',
         job: 'التسويق الرقمي',
         password: '123456',
         plan: 'free',
@@ -835,7 +841,7 @@ export function get() {
 }
 
 // ── USERS ───────────────────────────────────────────────────
-export function createUser({ name, email, job, password, plan = 'free', governorate = '' }) {
+export function createUser({ name, email, phone = '', nationalId = '', job, password, plan = 'free', governorate = '' }) {
   const db = load()
   const exists = db.users.find(u => u.email === email)
   if (exists) return { error: 'البريد الإلكتروني موجود بالفعل' }
@@ -843,6 +849,8 @@ export function createUser({ name, email, job, password, plan = 'free', governor
     id: newUserId(),
     name,
     email,
+    phone,
+    nationalId,
     job,
     password,
     plan,

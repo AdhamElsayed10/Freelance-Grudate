@@ -32,7 +32,7 @@ export default function Signup() {
   const [processing, setProcessing] = useState(false)
 
   const [form, setForm] = useState({
-    name: '', email: '', job: '', password: '', plan: 'free',
+    name: '', email: '', phone: '', nationalId: '', job: '', password: '', plan: 'free',
     governorate: '',
     // Company fields
     companyFullName: '', companyJobTitle: '', companyPhone: '',
@@ -99,7 +99,7 @@ export default function Signup() {
   const doSignup = () => {
     setProcessing(false)
     const result = signup({
-      name: form.name, email: form.email, job: form.job, password: form.password,
+      name: form.name, email: form.email, phone: form.phone, nationalId: form.nationalId, job: form.job, password: form.password,
       plan: form.plan, role: 'user',
       governorate: form.governorate,
       center_id: isElite ? form.selectedMedicalCenter || undefined : undefined,
@@ -414,7 +414,7 @@ export default function Signup() {
                           placeholder={t('signup', 'namePlaceholder')} />
                       </div>
                     </div>
-                    <div>
+                     <div>
                       <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'emailLabel')}</label>
                       <div className="relative">
                         <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
@@ -424,14 +424,30 @@ export default function Signup() {
                       </div>
                     </div>
                     <div>
+                      <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'phoneLabel')}</label>
+                      <div className="relative">
+                        <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
+                        <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+                          className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark placeholder-dark/40 outline-none input-focus"
+                          placeholder={t('signup', 'phonePlaceholder')} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'nationalIdLabel')}</label>
+                      <div className="relative">
+                        <UserCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
+                        <input type="text" name="nationalId" value={form.nationalId} onChange={handleChange}
+                          className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark placeholder-dark/40 outline-none input-focus"
+                          placeholder={t('signup', 'nationalIdPlaceholder')} />
+                      </div>
+                    </div>
+                    <div>
                       <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'specialtyLabel')}</label>
                       <div className="relative">
                         <Briefcase className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
-                        <select name="job" value={form.job} onChange={handleChange} required
-                          className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark outline-none input-focus appearance-none cursor-pointer">
-                          <option value="">{t('signup', 'specialtyPlaceholder')}</option>
-                          {specialties.map((s, i) => <option key={i} value={s}>{s}</option>)}
-                        </select>
+                        <input type="text" name="job" value={form.job} onChange={handleChange} required
+                          className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark placeholder-dark/40 outline-none input-focus"
+                          placeholder={t('signup', 'specialtyPlaceholder')} />
                       </div>
                     </div>
                     <div>
