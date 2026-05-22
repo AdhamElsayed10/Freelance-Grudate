@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
 import { getDiscountsByCompany } from '../../data/db'
 import BackButton from '../../components/BackButton'
-import { Eye, Activity, TrendingUp, Percent, BarChart3 } from 'lucide-react'
+import { Eye, Activity, Percent } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
  
 export default function CompanyAnalytics() {
@@ -20,7 +20,6 @@ export default function CompanyAnalytics() {
 
   const totalViews = discounts.reduce((sum, d) => sum + d.views, 0)
   const totalUses = discounts.reduce((sum, d) => sum + d.uses, 0)
-  const conversionRate = totalViews > 0 ? ((totalUses / totalViews) * 100).toFixed(1) : '0.0'
   const maxViews = Math.max(...discounts.map(d => d.views), 1)
 
   return (
@@ -34,11 +33,10 @@ export default function CompanyAnalytics() {
             <p className="text-dark/60 mb-8">{t('companyAnalytics', 'subtitle')}</p>
 
             {/* Summary cards */}
-            <div className="grid md:grid-cols-4 gap-4 mb-12">
+            <div className="grid md:grid-cols-3 gap-4 mb-12">
               {[
                 { label: t('companyAnalytics', 'totalViews'), value: totalViews, icon: Eye, color: 'text-blue-500' },
                 { label: t('companyAnalytics', 'totalUses'), value: totalUses, icon: Activity, color: 'text-emerald-500' },
-                { label: t('companyAnalytics', 'conversionRate'), value: `${conversionRate}%`, icon: TrendingUp, color: 'text-purple-500' },
                 { label: t('companyAnalytics', 'commission'), value: `${company.commission}%`, icon: Percent, color: 'text-gold' },
               ].map((s, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
