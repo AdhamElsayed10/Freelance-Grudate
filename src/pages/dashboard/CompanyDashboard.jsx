@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getDiscountsByCompany } from '../../data/db'
 import BackButton from '../../components/BackButton'
-import { Eye, Activity, Tag, Percent, Clock, AlertCircle } from 'lucide-react'
+import { Eye, Activity, Tag, Percent, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../../context/LanguageContext'
  
 export default function CompanyDashboard() {
-  const { company, refreshUser } = useAuth()
+  const { company } = useAuth()
   const { t, td, lang } = useLanguage()
   const [discounts, setDiscounts] = useState([])
 
@@ -19,9 +19,12 @@ export default function CompanyDashboard() {
 
   if (!company) return null
 
+  const totalViews = discounts.reduce((sum, d) => sum + d.views, 0)
+  const totalUses = discounts.reduce((sum, d) => sum + d.uses, 0)
+
   const stats = [
-    { label: t('companyAnalytics', 'totalViews'), value: company.views, icon: Eye, color: 'text-blue-500' },
-    { label: t('companyAnalytics', 'totalUses'), value: company.uses, icon: Activity, color: 'text-emerald-500' },
+    { label: t('companyAnalytics', 'totalViews'), value: totalViews, icon: Eye, color: 'text-blue-500' },
+    { label: t('companyAnalytics', 'totalUses'), value: totalUses, icon: Activity, color: 'text-emerald-500' },
     { label: t('companyDashboard', 'offeredDiscounts'), value: discounts.length, icon: Tag, color: 'text-gold' },
     { label: t('companyAnalytics', 'commission'), value: `${company.commission}%`, icon: Percent, color: 'text-purple-500' },
   ]

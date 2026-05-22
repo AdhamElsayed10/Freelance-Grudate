@@ -10,11 +10,13 @@ export default function AdminUsers() {
   const { t, td } = useLanguage()
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState('')
+  const [planFilter, setPlanFilter] = useState('all')
 
   useEffect(() => { setUsers(getAllUsers()) }, [])
 
   const filtered = users.filter(u =>
-    u.name.includes(search) || u.email.includes(search)
+    (planFilter === 'all' || u.plan === planFilter) &&
+    (u.name.includes(search) || u.email.includes(search))
   )
 
   const handlePlanChange = (id, plan) => {
@@ -42,12 +44,21 @@ export default function AdminUsers() {
             <h1 className="text-3xl font-bold text-dark mb-2">{t('adminUsers', 'heading')}</h1>
             <p className="text-dark/60 mb-8">{users.length}</p>
 
-            {/* Search */}
+            {/* Search + Filter */}
             <div className="bg-white rounded-2xl p-4 border border-gold/10 shadow-sm mb-6">
-              <div className="relative">
+              <div className="relative mb-4">
                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
                 <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('adminUsers', 'search')}
                   className="w-full bg-cream border border-gold/20 rounded-xl px-12 py-3 text-dark outline-none focus:border-gold/60 transition-all" />
+              </div>
+              {/* Subscription filter */}
+              <div className="flex gap-2 flex-wrap">
+                {['all', 'free', 'premium', 'elite'].map(p => (
+                  <button key={p} onClick={() => setPlanFilter(p)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${planFilter === p ? 'bg-dark text-white' : 'bg-cream text-dark/60 hover:bg-dark/10'}`}>
+                    {p === 'all' ? t('adminUsers', 'all') : planLabels[p]}
+                  </button>
+                ))}
               </div>
             </div>
 

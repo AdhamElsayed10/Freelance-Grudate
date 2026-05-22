@@ -307,12 +307,13 @@ function seedData() {
       { email: 'admin@mustakleen.com', password: 'admin123' },
     ],
     // Track which discounts each user has scanned (many-to-many via USERS scans)
+    // Each scan now includes invoice/pricing details for the detailed view
     user_scans: [
-      { user_id: 'FL-2026-0001', discount_id: 1, scanned_at: '2026-03-10T14:30:00.000Z' },
-      { user_id: 'FL-2026-0001', discount_id: 3, scanned_at: '2026-03-15T10:00:00.000Z' },
-      { user_id: 'FL-2026-0001', discount_id: 4, scanned_at: '2026-04-01T19:45:00.000Z' },
-      { user_id: 'FL-2026-0002', discount_id: 2, scanned_at: '2026-02-20T11:00:00.000Z' },
-      { user_id: 'FL-2026-0002', discount_id: 6, scanned_at: '2026-03-05T20:15:00.000Z' },
+      { user_id: 'FL-2026-0001', discount_id: 1, scanned_at: '2026-03-10T14:30:00.000Z', invoice_id: 'INV-2026-00001', product: 'أدوية ضغط وسكر', original_price: 450, discount_percent: '30%', discount_value: 135, final_price: 315 },
+      { user_id: 'FL-2026-0001', discount_id: 3, scanned_at: '2026-03-15T10:00:00.000Z', invoice_id: 'INV-2026-00002', product: 'اشتراك شهري جيم', original_price: 800, discount_percent: '40%', discount_value: 320, final_price: 480 },
+      { user_id: 'FL-2026-0001', discount_id: 4, scanned_at: '2026-04-01T19:45:00.000Z', invoice_id: 'INV-2026-00003', product: 'وجبة عائلة كاملة', original_price: 600, discount_percent: '25%', discount_value: 150, final_price: 450 },
+      { user_id: 'FL-2026-0002', discount_id: 2, scanned_at: '2026-02-20T11:00:00.000Z', invoice_id: 'INV-2026-00004', product: 'تحاليل شاملة', original_price: 1200, discount_percent: '40%', discount_value: 480, final_price: 720 },
+      { user_id: 'FL-2026-0002', discount_id: 6, scanned_at: '2026-03-05T20:15:00.000Z', invoice_id: 'INV-2026-00005', product: 'عشاء رومانسي', original_price: 350, discount_percent: '20%', discount_value: 70, final_price: 280 },
     ],
 
     // ── governorates ──────────────────────────────────────
@@ -1083,7 +1084,31 @@ export function payInstallment(id, amount) {
 // ── USER SCANS (many-to-many bridge) ───────────────────────
 export function recordScan(userId, discountId) {
   const db = load()
-  db.user_scans.push({ user_id: userId, discount_id: Number(discountId), scanned_at: today() })
+  const discount = db.discounts.find(d => d.id === Number(discountId))
+  const discountPct = discount ? parseInt(discount.discount_percent) : 20
+  const basePrice = rand(100, 2000)
+  const discountValue = Math.round(basePrice * discountPct / 100)
+  // Pick a realistic product name based on discount category
+  const productNames = {
+    medical: ['كشف طبي شامل', 'تحاليل شاملة', 'أدوية', 'أشعة', 'جلسة علاج'],
+    gym: ['اشتراك شهري', 'جلسة تدريب شخصي', 'اشتراك سنوي', 'جلسة ماساج'],
+    food: ['وجبة كاملة', 'وجبة عائلة', 'مشروبات', 'حلويات', 'عشاء'],
+    fun: ['تذكرة سينما', 'تذكرة دخول', 'جلسة ألعاب', 'رحلة'],
+  }
+  const catNames = productNames[discount?.category] || ['خدمة']
+  const product = catNames[rand(0, catNames.length - 1)]
+
+  db.user_scans.push({
+    user_id: userId,
+    discount_id: Number(discountId),
+    scanned_at: today(),
+    invoice_id: `INV-${Date.now()}-${rand(100, 999)}`,
+    product,
+    original_price: basePrice,
+    discount_percent: `${discountPct}%`,
+    discount_value: discountValue,
+    final_price: basePrice - discountValue,
+  })
   // Update user scan count + saved
   const user = db.users.find(u => u.id === userId)
   if (user) {
@@ -1092,7 +1117,6 @@ export function recordScan(userId, discountId) {
     user.saved += rand(20, 100) // simulated saving
   }
   // Update discount uses
-  const discount = db.discounts.find(d => d.id === Number(discountId))
   if (discount) discount.uses += 1
   // Update company uses
   if (discount) {
