@@ -1173,8 +1173,18 @@ export function payInstallment(id, amount) {
   return db.installments[idx]
 }
 
+// Generate promo code (e.g., MUSTAK-2026-ABC123)
+function generatePromoCode(discountPct = 20) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = 'MSTK-'
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
+}
+
 // ── USER SCANS (many-to-many bridge) ───────────────────────
-export function recordScan(userId, discountId) {
+export function recordScan(userId, discountId, details = {}) {
   const db = load()
   const discount = db.discounts.find(d => d.id === Number(discountId))
   const discountPct = discount ? parseInt(discount.discount_percent) : 20
@@ -1188,7 +1198,11 @@ export function recordScan(userId, discountId) {
     fun: ['تذكرة سينما', 'تذكرة دخول', 'جلسة ألعاب', 'رحلة'],
   }
   const catNames = productNames[discount?.category] || ['خدمة']
-  const product = catNames[rand(0, catNames.length - 1)]
+  const product = details.discountName || catNames[rand(0, catNames.length - 1)]
+  const promoCode = generatePromoCode(discountPct)
+  const finalPrice = details.priceAfterDiscount ? parseFloat(details.priceAfterDiscount) : (basePrice - discountValue)
+  const amountPaid = details.amountPaid ? parseFloat(details.amountPaid) : finalPrice
+  const last4Digits = details.last4Digits || `${rand(1000, 9999)}`
 
   db.user_scans.push({
     user_id: userId,
@@ -1199,7 +1213,10 @@ export function recordScan(userId, discountId) {
     original_price: basePrice,
     discount_percent: `${discountPct}%`,
     discount_value: discountValue,
-    final_price: basePrice - discountValue,
+    final_price: finalPrice,
+    promo_code: promoCode,
+    amount_paid: amountPaid,
+    invoice_last4: last4Digits,
   })
   // Update user scan count + saved
   const user = db.users.find(u => u.id === userId)
@@ -1305,6 +1322,13 @@ export function enrollUserInService(userId, { service_type, center_id, bank_id }
     bank_id: bank_id || null,
     enrolled_at: today(),
     status: 'active',
+    subscription_confirmed: false,
+    subscription_name: null,
+    subscription_dob: null,
+    subscription_phone: null,
+    subscription_data_use_agree: false,
+    subscription_terms_agree: false,
+    subscription_confirmed_at: null,
   }
   // Remove any existing enrollment for this service type
   const idx = db.user_enrollments.findIndex(e => e.user_id === userId && e.service_type === service_type)
@@ -1419,6 +1443,21 @@ export function getDiscountUsageDetail(discountId) {
       return { ...s, user }
     })
     .sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at))
+}
+
+export function confirmEnrollmentSubscription(enrollmentId, { name, dob, phone, dataUseAgree, termsAgree }) {
+  const db = load()
+  const idx = db.user_enrollments.findIndex(e => e.id === enrollmentId)
+  if (idx === -1) return null
+  db.user_enrollments[idx].subscription_confirmed = true
+  db.user_enrollments[idx].subscription_name = name
+  db.user_enrollments[idx].subscription_dob = dob
+  db.user_enrollments[idx].subscription_phone = phone
+  db.user_enrollments[idx].subscription_data_use_agree = dataUseAgree
+  db.user_enrollments[idx].subscription_terms_agree = termsAgree
+  db.user_enrollments[idx].subscription_confirmed_at = today()
+  save()
+  return db.user_enrollments[idx]
 }
 
 // ── STATISTICS ─────────────────────────────────────────────
