@@ -634,9 +634,6 @@ const translations = {
     // Stat card labels
     totalUsers: { ar: 'إجمالي المستخدمين', en: 'Total Users' },
     totalCompanies: { ar: 'الشركات', en: 'Companies' },
-    approvedDiscounts: { ar: 'الخصومات المعتمدة', en: 'Approved Discounts' },
-    pendingDiscounts: { ar: 'قيد المراجعة', en: 'Pending Review' },
-    totalScans: { ar: 'إجمالي المسح', en: 'Total Scans' },
     revenue: { ar: 'الإيرادات', en: 'Revenue' },
   },
 
