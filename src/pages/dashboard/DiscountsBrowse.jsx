@@ -4,11 +4,22 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
 import BackButton from '../../components/BackButton'
+import Modal from '../../components/Modal'
 import { getApprovedDiscounts, getGovernorates, incrementDiscountUses, recordScan } from '../../data/db'
-import { Search, MapPin, Tag, Building2, Percent, CheckCircle, QrCode } from 'lucide-react'
+import { Search, MapPin, Tag, Building2, Percent, CheckCircle, QrCode, Copy, Check, ShoppingCart, DollarSign, CreditCard } from 'lucide-react'
 
 // Tier hierarchy: higher tier includes lower tiers
 const TIER_LEVEL = { free: 1, premium: 2, elite: 3 }
+
+// Generate promo code (e.g., MSTK-ABC123)
+function generatePromoCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = 'MSTK-'
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
+}
 
 export default function DiscountsBrowse() {
   const { user, refreshUser } = useAuth()
@@ -20,6 +31,18 @@ export default function DiscountsBrowse() {
   const [filterTier, setFilterTier] = useState('all')
   const [filterGov, setFilterGov] = useState(user?.governorate || 'all')
   const [scannedId, setScannedId] = useState(null)
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedDiscount, setSelectedDiscount] = useState(null)
+  const [promoCode, setPromoCode] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [applyForm, setApplyForm] = useState({
+    discountName: '',
+    priceAfterDiscount: '',
+    amountPaid: '',
+    last4Digits: '',
+  })
 
   const userTier = user?.plan ? TIER_LEVEL[user.plan] || 0 : 3
 
@@ -38,20 +61,51 @@ export default function DiscountsBrowse() {
     return true
   })
 
-  const handleScan = (discount) => {
+  const handleOpenModal = (discount) => {
     if (!user) {
       alert(t('discountsBrowse', 'loginRequired'))
       return
     }
-    // Block scanning discounts above user's plan tier
     if (TIER_LEVEL[user.plan] < TIER_LEVEL[discount.tier]) {
       alert(t('discountsBrowse', 'upgradeRequired'))
       return
     }
-    incrementDiscountUses(discount.id)
-    recordScan(user.id, discount.id)
+    setSelectedDiscount(discount)
+    setPromoCode(generatePromoCode())
+    setApplyForm({
+      discountName: td('discounts', discount.name, 'name') || discount.name,
+      priceAfterDiscount: '',
+      amountPaid: '',
+      last4Digits: '',
+    })
+    setCopied(false)
+    setModalOpen(true)
+  }
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setApplyForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCopyPromo = () => {
+    navigator.clipboard?.writeText(promoCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleConfirmApply = () => {
+    if (!selectedDiscount) return
+
+    incrementDiscountUses(selectedDiscount.id)
+    recordScan(user.id, selectedDiscount.id, {
+      discountName: applyForm.discountName,
+      priceAfterDiscount: applyForm.priceAfterDiscount,
+      amountPaid: applyForm.amountPaid,
+      last4Digits: applyForm.last4Digits,
+    })
     refreshUser()
-    setScannedId(discount.id)
+    setScannedId(selectedDiscount.id)
+    setModalOpen(false)
     setTimeout(() => setScannedId(null), 2000)
   }
 
@@ -137,8 +191,8 @@ export default function DiscountsBrowse() {
                         {scannedId === discount.id ? (
                           <span className="text-emerald-500 flex items-center gap-1 font-bold"><CheckCircle size={16} /> {t('discountsBrowse', 'done')}</span>
                         ) : (
-                          <button onClick={() => handleScan(discount)} className="bg-dark text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 hover:bg-darkLight transition-all">
-                            <QrCode size={14} /> {t('discountsBrowse', 'useDiscount')}
+                          <button onClick={() => handleOpenModal(discount)} className="bg-dark text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 hover:bg-darkLight transition-all">
+                            <Tag size={14} /> {t('discountsBrowse', 'useDiscount')}
                           </button>
                         )}
                       </div>
@@ -150,6 +204,112 @@ export default function DiscountsBrowse() {
           </motion.div>
         </div>
       </section>
+
+      {/* Apply Discount Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={t('discountsBrowse', 'applyDiscount')}
+        size="md"
+      >
+        {selectedDiscount && (
+          <div className="space-y-6">
+            {/* Discount Info */}
+            <div className="bg-cream rounded-xl p-4 text-center">
+              <p className="text-dark/60 text-sm mb-1">{td('discounts', selectedDiscount.name, 'name')}</p>
+              <p className="text-3xl font-extrabold text-gold">{selectedDiscount.discount_percent} {t('discountsBrowse', 'discount')}</p>
+            </div>
+
+            {/* Promo Code - Bold and Prominent */}
+            <div className="bg-dark rounded-xl p-5 text-center">
+              <p className="text-white/60 text-xs mb-2">{t('discountsBrowse', 'promoCode')}</p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl font-black text-gold tracking-widest" dir="ltr">{promoCode}</span>
+                <button
+                  onClick={handleCopyPromo}
+                  className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all"
+                >
+                  {copied ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} className="text-white/60" />}
+                </button>
+              </div>
+              {copied && <p className="text-emerald-400 text-xs mt-2">{t('discountsBrowse', 'copied')}</p>}
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-4">
+              {/* Discount Name */}
+              <div>
+                <label className="block text-dark font-semibold mb-2 text-sm">
+                  <ShoppingCart size={14} className="inline ml-1" /> {t('discountsBrowse', 'discountName')}
+                </label>
+                <input
+                  type="text"
+                  name="discountName"
+                  value={applyForm.discountName}
+                  onChange={handleFormChange}
+                  placeholder={t('discountsBrowse', 'discountNamePlaceholder')}
+                  className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-dark outline-none focus:border-gold/60 transition-all"
+                />
+              </div>
+
+              {/* Price After Discount */}
+              <div>
+                <label className="block text-dark font-semibold mb-2 text-sm">
+                  <DollarSign size={14} className="inline ml-1" /> {t('discountsBrowse', 'priceAfterDiscount')}
+                </label>
+                <input
+                  type="number"
+                  name="priceAfterDiscount"
+                  value={applyForm.priceAfterDiscount}
+                  onChange={handleFormChange}
+                  placeholder={t('discountsBrowse', 'pricePlaceholder')}
+                  className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-dark outline-none focus:border-gold/60 transition-all"
+                />
+              </div>
+
+              {/* Amount Paid */}
+              <div>
+                <label className="block text-dark font-semibold mb-2 text-sm">
+                  <DollarSign size={14} className="inline ml-1" /> {t('discountsBrowse', 'amountPaid')}
+                </label>
+                <input
+                  type="number"
+                  name="amountPaid"
+                  value={applyForm.amountPaid}
+                  onChange={handleFormChange}
+                  placeholder={t('discountsBrowse', 'amountPlaceholder')}
+                  className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-dark outline-none focus:border-gold/60 transition-all"
+                />
+              </div>
+
+              {/* Last 4 Digits of Invoice */}
+              <div>
+                <label className="block text-dark font-semibold mb-2 text-sm">
+                  <CreditCard size={14} className="inline ml-1" /> {t('discountsBrowse', 'last4Digits')}
+                </label>
+                <input
+                  type="text"
+                  name="last4Digits"
+                  value={applyForm.last4Digits}
+                  onChange={handleFormChange}
+                  maxLength={4}
+                  placeholder={t('discountsBrowse', 'last4Placeholder')}
+                  className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-dark outline-none focus:border-gold/60 transition-all"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            {/* Confirm Button */}
+            <button
+              onClick={handleConfirmApply}
+              className="w-full bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-gold/20 transition-all"
+            >
+              {t('discountsBrowse', 'confirmApply')}
+            </button>
+          </div>
+        )}
+      </Modal>
     </>
   )
 }
