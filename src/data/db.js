@@ -102,6 +102,7 @@ function seedData() {
         views: 1540,
         uses: 320,
         commission: 15.5,
+        plan: 'premium',
       },
       {
         id: 'CO-1715100000-202',
@@ -130,6 +131,7 @@ function seedData() {
         views: 4200,
         uses: 1100,
         commission: 8.0,
+        plan: 'premium',
       },
       {
         id: 'CO-1715300000-404',
@@ -174,6 +176,7 @@ function seedData() {
         views: 2800,
         uses: 650,
         commission: 10.0,
+        plan: 'elite',
       },
       {
         id: 'CO-1715200000-303',
@@ -965,6 +968,26 @@ export function getAllUsers() {
   return load().users
 }
 
+export function removeUserSubscription(userId) {
+  const db = load()
+  const idx = db.users.findIndex(u => u.id === userId)
+  if (idx === -1) return null
+  db.users[idx].plan = 'free'
+  save()
+  return db.users[idx]
+}
+
+export function getAllSubscriptions() {
+  const db = load()
+  return db.users.map(u => ({
+    ...u,
+    subscriptionStatus:
+      u.plan === 'premium' || u.plan === 'elite' ? 'active'
+      : u.plan === 'free' ? 'inactive'
+      : 'pending',
+  }))
+}
+
 // ── COMPANIES ──────────────────────────────────────────────
 export function createCompany({ name, email, password, category, city, emoji }) {
   const db = load()
@@ -1057,6 +1080,14 @@ export function updateDiscount(id, updates) {
   const db = load()
   const idx = db.discounts.findIndex(d => d.id === Number(id))
   if (idx === -1) return null
+  // Auto-set approved_at when status changes to 'approved'
+  if (updates.status === 'approved' && db.discounts[idx].status !== 'approved' && !updates.approved_at) {
+    updates.approved_at = today()
+  }
+  // Clear approved_at if status changes away from 'approved'
+  if (updates.status && updates.status !== 'approved' && db.discounts[idx].status === 'approved') {
+    updates.approved_at = null
+  }
   db.discounts[idx] = { ...db.discounts[idx], ...updates }
   save()
   return db.discounts[idx]
@@ -1202,6 +1233,17 @@ export function getAllUserScans() {
   return load().user_scans
 }
 
+export function getAllScansWithDetails() {
+  const db = load()
+  return db.user_scans
+    .map(s => {
+      const user = db.users.find(u => u.id === s.user_id) || null
+      const discount = db.discounts.find(d => d.id === s.discount_id) || null
+      return { ...s, user, discount }
+    })
+    .sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at))
+}
+
 // ── ADMIN ──────────────────────────────────────────────────
 export function findAdmin(email, password) {
   const db = load()
@@ -1283,13 +1325,100 @@ export function getUserEnrollments(userId) {
     })
 }
 
-export function cancelEnrollment(enrollmentId) {
+// ── ENROLLMENTS ───────────────────────────────────────────
+export function getAllEnrollments() {
   const db = load()
-  const idx = db.user_enrollments.findIndex(e => e.id === enrollmentId)
-  if (idx === -1) return null
-  db.user_enrollments[idx].status = 'cancelled'
-  save()
-  return db.user_enrollments[idx]
+  return db.user_enrollments.map(e => {
+    const user = db.users.find(u => u.id === e.user_id) || null
+    const center = e.center_id ? db.medical_centers.find(c => c.id === e.center_id) || null : null
+    const bank = e.bank_id ? db.banks.find(b => b.id === e.bank_id) || null : null
+    return { ...e, user, center, bank }
+  })
+}
+
+// ── SUBSCRIBERS BY SERVICE TYPE ───────────────────────────
+export function getSubscribersByServiceType(type) {
+  const db = load()
+  const users = db.users
+  let userIds = new Set()
+  const userActivityMap = {} // userId -> { scans: 0, saved: 0 }
+
+  switch (type) {
+    case 'insurance': {
+      // Medical discount scans
+      const medDiscountIds = new Set(db.discounts.filter(d => d.category === 'medical').map(d => d.id))
+      db.user_scans.forEach(s => {
+        if (medDiscountIds.has(s.discount_id)) {
+          userIds.add(s.user_id)
+          if (!userActivityMap[s.user_id]) userActivityMap[s.user_id] = { scans: 0, saved: 0 }
+          userActivityMap[s.user_id].scans += 1
+          userActivityMap[s.user_id].saved += s.discount_value || 0
+        }
+      })
+      // Medical / combined enrollments
+      db.user_enrollments.filter(e => e.service_type === 'medical' || e.service_type === 'combined').forEach(e => {
+        userIds.add(e.user_id)
+      })
+      break
+    }
+    case 'financial': {
+      db.user_enrollments.filter(e => e.service_type === 'financial' || e.service_type === 'combined').forEach(e => {
+        userIds.add(e.user_id)
+      })
+      break
+    }
+    case 'training': {
+      db.installments.filter(i => i.name.includes('كورس') || i.name.includes('تعليم') || i.name.includes('Course') || i.name.includes('Training')).forEach(i => {
+        userIds.add(i.user_id)
+      })
+      break
+    }
+    case 'restaurants': {
+      const foodDiscountIds = new Set(db.discounts.filter(d => d.category === 'food').map(d => d.id))
+      db.user_scans.forEach(s => {
+        if (foodDiscountIds.has(s.discount_id)) {
+          userIds.add(s.user_id)
+          if (!userActivityMap[s.user_id]) userActivityMap[s.user_id] = { scans: 0, saved: 0 }
+          userActivityMap[s.user_id].scans += 1
+          userActivityMap[s.user_id].saved += s.discount_value || 0
+        }
+      })
+      break
+    }
+    case 'clubs': {
+      const clubDiscountIds = new Set(db.discounts.filter(d => d.category === 'gym' || d.category === 'fun').map(d => d.id))
+      db.user_scans.forEach(s => {
+        if (clubDiscountIds.has(s.discount_id)) {
+          userIds.add(s.user_id)
+          if (!userActivityMap[s.user_id]) userActivityMap[s.user_id] = { scans: 0, saved: 0 }
+          userActivityMap[s.user_id].scans += 1
+          userActivityMap[s.user_id].saved += s.discount_value || 0
+        }
+      })
+      break
+    }
+  }
+
+  return users
+    .filter(u => userIds.has(u.id))
+    .map(u => ({
+      ...u,
+      typeScans: userActivityMap[u.id]?.scans || 0,
+      typeSaved: userActivityMap[u.id]?.saved || 0,
+    }))
+    .sort((a, b) => b.typeScans - a.typeScans)
+}
+
+// ── DISCOUNT USAGE DETAIL ─────────────────────────────────
+export function getDiscountUsageDetail(discountId) {
+  const db = load()
+  return db.user_scans
+    .filter(s => s.discount_id === Number(discountId))
+    .map(s => {
+      const user = db.users.find(u => u.id === s.user_id) || null
+      return { ...s, user }
+    })
+    .sort((a, b) => new Date(b.scanned_at) - new Date(a.scanned_at))
 }
 
 // ── STATISTICS ─────────────────────────────────────────────
@@ -1311,5 +1440,49 @@ export function getStats() {
     pendingDiscounts: db.discounts.filter(d => d.status === 'pending').length,
     totalScans: db.user_scans.length,
     totalRevenue,
+  }
+}
+
+// ── REVENUE DETAIL (per-client subscription breakdown) ───
+export function getAllRevenueDetails() {
+  const db = load()
+  return db.users
+    .map(u => {
+      const planRevenue = u.plan === 'premium' ? 99 : u.plan === 'elite' ? 199 : 0
+      const userScans = db.user_scans.filter(s => s.user_id === u.id)
+      const userInstallments = db.installments.filter(i => i.user_id === u.id)
+      const userEnrollments = db.user_enrollments.filter(e => e.user_id === u.id)
+      const totalScanValue = userScans.reduce((sum, s) => sum + (s.discount_value || 0), 0)
+      return {
+        ...u,
+        planRevenue,
+        subscriptionStatus: u.plan === 'premium' || u.plan === 'elite' ? 'active' : 'inactive',
+        totalScans: userScans.length,
+        totalScanSaved: totalScanValue,
+        userScans,
+        userInstallments,
+        userEnrollments,
+        totalInstallments: userInstallments.length,
+        installmentTotalPaid: userInstallments.reduce((sum, i) => sum + i.paid, 0),
+        installmentTotalRemaining: userInstallments.reduce((sum, i) => sum + (i.total - i.paid), 0),
+      }
+    })
+    .sort((a, b) => b.planRevenue - a.planRevenue || b.totalScans - a.totalScans)
+}
+
+// ── USER FULL DETAIL (aggregated for admin) ──────────────
+export function getUserFullDetail(userId) {
+  const user = findUserById(userId)
+  if (!user) return null
+  const cards = getUserCards(userId)
+  const scans = getUserScans(userId)
+  const installments = getUserInstallments(userId)
+  const enrollments = getUserEnrollments(userId)
+  return {
+    user,
+    cards,
+    scans,
+    installments,
+    enrollments,
   }
 }

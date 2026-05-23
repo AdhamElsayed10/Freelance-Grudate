@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
-import { getAllCompanies, getAllUsers, updateCompany, getDiscountsByCompany, getAllUserScans, getUserCards, getUserInstallments, getUserScans } from '../../data/db'
+import { getAllCompanies, getAllUsers, updateCompany, getDiscountsByCompany, getAllUserScans, getUserCards, getUserInstallments, getUserScans, getSubscribersByServiceType } from '../../data/db'
 import BackButton from '../../components/BackButton'
 import Modal from '../../components/Modal'
-import { Search, CheckCircle, XCircle, Building2, BarChart3, Eye, MousePointerClick, UserCheck, Calendar, ChevronDown, ChevronUp, X, Receipt, CreditCard, Hash, User, Package, CalendarDays, DollarSign, BadgePercent, FileText, MapPin, Phone, Mail, Briefcase, Shield, Clock, Layers, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Search, CheckCircle, XCircle, Building2, BarChart3, Eye, MousePointerClick, UserCheck, Calendar, ChevronDown, ChevronUp, X, Receipt, CreditCard, Hash, User, Package, CalendarDays, DollarSign, BadgePercent, FileText, MapPin, Phone, Mail, Briefcase, Shield, Clock, Layers, ChevronRight, ChevronLeft, Users } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 
 function formatDate(iso) {
@@ -138,6 +138,21 @@ function CompanyUsageModalContent({ company, t, td }) {
           <span className="text-xs text-dark/40">{t('adminCompanies', 'views')}: {company.views}</span>
         </div>
       </div>
+
+      {/* ── Subscription (only when active) ── */}
+      {company.plan && (
+        <div className="bg-cream rounded-xl p-5 border border-gold/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Package size={16} className="text-gold" />
+              <span className="text-sm font-bold text-dark">{t('adminCompanies', 'subscription')}</span>
+            </div>
+            <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${planColors[company.plan]}`}>
+              {planLabels[company.plan] || company.plan}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ── Summary Stats ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -419,14 +434,82 @@ function UserDetailModalContent({ userId, userDetail, cards, installments, scans
   )
 }
 
+/* ─── Subscribers Modal Content ─── */
+function SubscribersModalContent({ subscribers, typeLabel, onSelectUser, t, td }) {
+  const planColors = { free: 'bg-gray-100 text-gray-600', premium: 'bg-yellow-100 text-yellow-700', elite: 'bg-emerald-100 text-emerald-700' }
+  const planLabels = { free: 'Free', premium: 'Premium', elite: 'Elite' }
+
+  if (subscribers.length === 0) {
+    return (
+      <div className="bg-cream rounded-xl p-12 text-center border border-gold/10">
+        <Users className="text-gold/30 mx-auto mb-4" size={48} />
+        <p className="text-dark/50 font-semibold">{t('adminCompanies', 'noSubscribers')}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-dark/60">
+          {t('adminCompanies', 'subscriberCount')}: <span className="font-bold text-dark">{subscribers.length.toLocaleString()}</span>
+        </p>
+        <p className="text-sm text-dark/40">{typeLabel}</p>
+      </div>
+
+      <div className="bg-cream rounded-xl border border-gold/10 overflow-x-auto">
+        <table className="w-full text-right">
+          <thead>
+            <tr className="border-b border-gold/10 bg-white">
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap">{t('adminCompanies', 'subscriberName')}</th>
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap hidden md:table-cell">{t('adminCompanies', 'subscriberEmail')}</th>
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap hidden lg:table-cell">{t('adminCompanies', 'subscriberPhone')}</th>
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap">{t('adminCompanies', 'subscriberPlan')}</th>
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap">{t('adminCompanies', 'subscriberScans')}</th>
+              <th className="p-3 text-dark font-bold text-xs whitespace-nowrap hidden lg:table-cell">{t('adminCompanies', 'subscriberSaved')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gold/5">
+            {subscribers.map((u) => (
+              <tr key={u.id} className="hover:bg-white/50 transition-colors">
+                <td className="p-3">
+                  <button onClick={() => onSelectUser(u.id)}
+                    className="text-left group">
+                    <p className="text-sm text-dark font-semibold group-hover:text-gold transition-colors">{td('users', u.name)}</p>
+                    <p className="text-xs text-dark/40 group-hover:text-gold/60 transition-colors" dir="ltr">{u.id}</p>
+                  </button>
+                </td>
+                <td className="p-3 text-sm text-dark/70 truncate max-w-[180px] hidden md:table-cell" dir="ltr">{u.email}</td>
+                <td className="p-3 text-sm text-dark/70 hidden lg:table-cell" dir="ltr">{u.phone || '—'}</td>
+                <td className="p-3">
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${planColors[u.plan]}`}>
+                    {planLabels[u.plan] || u.plan || '—'}
+                  </span>
+                </td>
+                <td className="p-3 text-sm text-dark font-semibold">{u.typeScans}</td>
+                <td className="p-3 text-sm text-emerald-600 font-semibold hidden lg:table-cell">
+                  {u.typeSaved > 0 ? `${u.typeSaved.toLocaleString()} ${t('pricing', 'egp')}` : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminCompanies() {
   const { t, td } = useLanguage()
   const [companies, setCompanies] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState(null) // null | 'insurance' | 'financial' | 'training' | 'restaurants' | 'clubs'
   const [expandedId, setExpandedId] = useState(null)
   const [companyModal, setCompanyModal] = useState(null) // company object or null
   const [selectedUserId, setSelectedUserId] = useState(null)
+  const [subscribers, setSubscribers] = useState([])
+  const [showSubscribers, setShowSubscribers] = useState(false)
 
   // User detail modal data
   const [userDetail, setUserDetail] = useState(null)
@@ -452,10 +535,27 @@ export default function AdminCompanies() {
     setUserScanHistory(getUserScans(selectedUserId) || [])
   }, [selectedUserId])
 
+  const COMPANY_TYPE_CATEGORIES = {
+    insurance: ['medical'],
+    financial: [],
+    training: [],
+    restaurants: ['food'],
+    clubs: ['gym', 'fun'],
+  }
+
   const filtered = companies.filter(c => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false
+    if (typeFilter && COMPANY_TYPE_CATEGORIES[typeFilter]?.length > 0) {
+      if (!COMPANY_TYPE_CATEGORIES[typeFilter].includes(c.category)) return false
+    }
     if (search && !c.name.includes(search) && !c.email.includes(search)) return false
     return true
+  })
+
+  const typeCounts = {}
+  Object.keys(COMPANY_TYPE_CATEGORIES).forEach(key => {
+    const cats = COMPANY_TYPE_CATEGORIES[key]
+    typeCounts[key] = cats.length > 0 ? companies.filter(c => cats.includes(c.category)).length : 0
   })
 
   const handleStatus = (id, status) => {
@@ -469,6 +569,12 @@ export default function AdminCompanies() {
 
   const toggleExpand = (id) => {
     setExpandedId(prev => prev === id ? null : id)
+  }
+
+  const handleViewSubscribers = (type) => {
+    const data = getSubscribersByServiceType(type)
+    setSubscribers(data)
+    setShowSubscribers(true)
   }
 
   const categoryLabels = { medical: t('adminCompanies', 'medical'), gym: t('adminCompanies', 'sports'), food: t('adminCompanies', 'restaurants'), fun: t('adminCompanies', 'entertainment') }
@@ -498,10 +604,50 @@ export default function AdminCompanies() {
                 </div>
                 <div className="flex gap-2">
                   {['all', 'pending', 'approved', 'rejected'].map(s => (
-                    <button key={s} onClick={() => setStatusFilter(s)}
+                    <button key={s} onClick={() => { setStatusFilter(s); if (s === 'all') setTypeFilter(null) }}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === s ? 'bg-dark text-white' : 'bg-cream text-dark/60 hover:bg-dark/10'}`}>
                       {s === 'all' ? t('adminCompanies', 'all') : statusLabels[s]}
                     </button>
+                  ))}
+                </div>
+              </div>
+              {/* ── Company Type Filter ── */}
+              <div className="mt-4 pt-4 border-t border-gold/10">
+                <p className="text-xs font-bold text-dark/40 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <Building2 size={14} className="text-gold" />
+                  {t('adminCompanies', 'typeFilter')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'insurance', icon: '🛡️' },
+                    { key: 'financial', icon: '🏦' },
+                    { key: 'training', icon: '📚' },
+                    { key: 'restaurants', icon: '🍽️' },
+                    { key: 'clubs', icon: '🎯' },
+                  ].map(({ key, icon }) => (
+                    <div key={key} className="flex items-center">
+                      <button onClick={() => setTypeFilter(typeFilter === key ? null : key)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                          typeFilter === key
+                            ? 'bg-dark text-white border-dark shadow-md'
+                            : 'bg-cream text-dark/60 border-gold/10 hover:bg-dark/10 hover:border-dark/20'
+                        }`}>
+                        <span>{icon}</span>
+                        <span>{t('adminCompanies', key)}</span>
+                        {typeFilter === key && (
+                          <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">
+                            {typeCounts[key]}
+                          </span>
+                        )}
+                      </button>
+                      {typeFilter === key && (
+                        <button onClick={() => handleViewSubscribers(key)}
+                          className="ml-2 flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-all whitespace-nowrap">
+                          <Users size={14} />
+                          {t('adminCompanies', 'viewSubscribers')}
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -600,6 +746,21 @@ export default function AdminCompanies() {
                               <p className="text-2xl font-bold text-dark">{c.views}</p>
                             </div>
                           </div>
+
+                          {/* ── Subscription (only when active) ── */}
+                          {c.plan && (
+                            <div className="bg-white rounded-xl p-4 border border-gold/10 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Package size={16} className="text-gold" />
+                                  <span className="text-xs font-bold text-dark/50 uppercase tracking-wide">{t('adminCompanies', 'subscription')}</span>
+                                </div>
+                                <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${planColors[c.plan]}`}>
+                                  {planLabels[c.plan] || c.plan}
+                                </span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Discounts breakdown table */}
                           <div>
@@ -749,6 +910,18 @@ export default function AdminCompanies() {
             onClose={() => setSelectedUserId(null)}
           />
         )}
+      </Modal>
+
+      {/* ──────────── Subscribers Modal ──────────── */}
+      <Modal open={showSubscribers} onClose={() => setShowSubscribers(false)}
+        title={`${t('adminCompanies', 'subscribersTitle')}${typeFilter ? t('adminCompanies', typeFilter) : ''}`} size="xl">
+        <SubscribersModalContent
+          subscribers={subscribers}
+          typeLabel={typeFilter ? t('adminCompanies', typeFilter) : ''}
+          onSelectUser={(userId) => { setShowSubscribers(false); setSelectedUserId(userId) }}
+          t={t}
+          td={td}
+        />
       </Modal>
     </>
   )
