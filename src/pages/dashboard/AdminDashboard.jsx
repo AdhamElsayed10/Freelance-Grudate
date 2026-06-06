@@ -27,6 +27,7 @@ import {
   Calendar,
   Activity,
 } from 'lucide-react'
+import RevenueSection from '../../components/admin/RevenueSection'
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage()
@@ -106,19 +107,8 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            {/* Monthly Revenue */}
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-dark mb-4">{t('adminDashboard', 'revenue')}</h2>
-              <div className="w-full md:w-1/3">
-                <button onClick={openRevenueModal} className="w-full text-right bg-white rounded-2xl p-5 border border-gold/10 shadow-sm hover:shadow-md hover:border-gold/30 transition-all cursor-pointer">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-dark/50 text-xs">{t('adminDashboard', 'revenue')}</span>
-                    <DollarSign className="text-gold" size={22} />
-                  </div>
-                  <p className="text-2xl font-bold text-dark">{stats.totalRevenue} {t('pricing', 'egp')}</p>
-                </button>
-              </div>
-            </div>
+            {/* Monthly Revenue - Interactive */}
+            <RevenueSection stats={stats} />
 
             {/* Quick links */}
             <h2 className="text-2xl font-bold text-dark mb-6">{t('adminDashboard', 'quickManage')}</h2>
