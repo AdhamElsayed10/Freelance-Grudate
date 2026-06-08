@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { registerUser, loginUser, getCurrentUser, logoutUser } from '../services/authService'
 import { findUser, findCompany, findAdmin, createUser, createCompany, findUserById, findCompanyById, enrollUserInService } from '../data/db'
 
 const AuthContext = createContext(null)
 
-// persist current session
+const TOKEN_KEY = 'token'
+const USER_KEY = 'mustakleen_user'
 const SESSION_KEY = 'mustakleen_session'
 
+// ── Local/mock session helpers (for company & admin) ─────────
 function loadSession() {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
@@ -25,108 +28,183 @@ function clearSession() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser]     = useState(null)   // logged-in user object or null
-  const [company, setCompany] = useState(null) // logged-in company or null
-  const [admin, setAdmin]   = useState(null)   // logged-in admin or null
+  const [user, setUser]       = useState(null)   // logged-in user object or null
+  const [company, setCompany] = useState(null)    // logged-in company or null
+  const [admin, setAdmin]     = useState(null)    // logged-in admin or null
   const [loading, setLoading] = useState(true)
 
-  // hydrate session on mount
+  // ── Hydrate session on mount ──────────────────────────────
   useEffect(() => {
-    const session = loadSession()
-    if (session) {
-      if (session.type === 'user') {
-        const u = findUserById(session.id)
-        if (u) setUser(u)
-      } else if (session.type === 'company') {
-        const c = findCompanyById(session.id)
-        if (c) setCompany(c)
-      } else if (session.type === 'admin') {
-        const a = findAdmin(session.email, session.password)
-        if (a) setAdmin(a)
+    const hydrate = async () => {
+      // 1. Try JWT-based session (real backend user)
+      const token = localStorage.getItem(TOKEN_KEY)
+      if (token) {
+        try {
+          const data = await getCurrentUser()
+          if (data.success && data.user) {
+            setUser(data.user)
+            localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+            setLoading(false)
+            return
+          }
+        } catch (err) {
+          // Token expired or invalid — clear it
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(USER_KEY)
+        }
       }
+
+      // 2. Try mock session (company / admin)
+      const session = loadSession()
+      if (session) {
+        if (session.type === 'company') {
+          const c = findCompanyById(session.id)
+          if (c) setCompany(c)
+        } else if (session.type === 'admin') {
+          const a = findAdmin(session.email, session.password)
+          if (a) setAdmin(a)
+        }
+      }
+
+      setLoading(false)
     }
-    setLoading(false)
+
+    hydrate()
   }, [])
 
-  const login = useCallback((email, password, role) => {
+  // ── Login ────────────────────────────────────────────────────
+  const login = useCallback(async (email, password, role) => {
+    // User login → real backend API
     if (role === 'user') {
-      const u = findUser(email, password)
-      if (u) {
-        setUser(u)
-        setCompany(null)
-        setAdmin(null)
-        saveSession({ type: 'user', id: u.id })
-        return { success: true, user: u }
+      try {
+        const data = await loginUser(email, password)
+        if (data.success && data.token) {
+          localStorage.setItem(TOKEN_KEY, data.token)
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+          setUser(data.user)
+          setCompany(null)
+          setAdmin(null)
+          clearSession()
+          return { success: true, user: data.user }
+        }
+        return { error: data.message || 'invalid_credentials' }
+      } catch (err) {
+        const msg = err.response?.data?.message || 'invalid_credentials'
+        return { error: msg }
       }
-      return { error: 'invalid_credentials' }
     }
+
+    // Company login → mock data (no backend model yet)
     if (role === 'company') {
       const c = findCompany(email, password)
       if (c) {
         setCompany(c)
         setUser(null)
         setAdmin(null)
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
         saveSession({ type: 'company', id: c.id })
         return { success: true, company: c }
       }
       return { error: 'invalid_credentials' }
     }
+
+    // Admin login → mock data (no backend model yet)
     if (role === 'admin') {
       const a = findAdmin(email, password)
       if (a) {
         setAdmin(a)
         setUser(null)
         setCompany(null)
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
         saveSession({ type: 'admin', email: a.email, password: a.password })
         return { success: true, admin: a }
       }
       return { error: 'invalid_login_data' }
     }
+
     return { error: 'unknown_role' }
   }, [])
 
-  const signup = useCallback(({ name, email, phone, nationalId, job, password, plan, role, governorate, center_id, bank_id }) => {
+  // ── Signup ───────────────────────────────────────────────────
+  const signup = useCallback(async ({ name, email, phone, nationalId, job, password, plan, role, governorate, center_id, bank_id }) => {
+    // User signup → real backend API
     if (role === 'user') {
-      const result = createUser({ name, email, phone, nationalId, job, password, plan, governorate })
-      if (result.error) return { error: result.error }
-      // Enroll in selected services if elite/premium plan with chosen center/bank
-      if (result.user && (center_id || bank_id)) {
-        if (center_id) enrollUserInService(result.user.id, { service_type: 'medical', center_id })
-        if (bank_id) enrollUserInService(result.user.id, { service_type: 'financial', bank_id })
+      try {
+        const data = await registerUser({
+          fullName: name,
+          email,
+          phone,
+          nationalId,
+          profession: job,
+          governorate,
+          password,
+        })
+
+        if (data.success && data.token) {
+          localStorage.setItem(TOKEN_KEY, data.token)
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+          setUser(data.user)
+          setCompany(null)
+          setAdmin(null)
+          clearSession()
+          return { success: true, user: data.user }
+        }
+        return { error: data.message || 'registration_failed' }
+      } catch (err) {
+        const msg = err.response?.data?.message || 'registration_failed'
+        return { error: msg }
       }
-      setUser(result.user)
-      setCompany(null)
-      setAdmin(null)
-      saveSession({ type: 'user', id: result.user.id })
-      return { success: true, user: result.user }
     }
+
+    // Company signup → mock data (no backend model yet)
     if (role === 'company') {
-      const result = createCompany({ name, email, password, category: job, city: '', emoji: '🏢' })
+      const result = createCompany({ name, email, password: name + '123', category: job, city: '', emoji: '🏢' })
       if (result.error) return { error: result.error }
       setCompany(result.company)
       setUser(null)
       setAdmin(null)
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
       saveSession({ type: 'company', id: result.company.id })
       return { success: true, company: result.company }
     }
+
     return { error: 'unknown_role' }
   }, [])
 
-  const logout = useCallback(() => {
+  // ── Logout ───────────────────────────────────────────────────
+  const logout = useCallback(async () => {
+    // If we have a JWT token, call backend logout
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token) {
+      try {
+        await logoutUser()
+      } catch (_) {
+        // Ignore errors — we clear local state regardless
+      }
+    }
+
     setUser(null)
     setCompany(null)
     setAdmin(null)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
     clearSession()
   }, [])
 
-  // Helper to refresh user data after mutations
-  const refreshUser = useCallback(() => {
-    if (user) {
-      const u = findUserById(user.id)
-      if (u) {
-        setUser(u)
-        saveSession({ type: 'user', id: u.id })
-      }
+  // ── Refresh user data ────────────────────────────────────────
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token && user) {
+      try {
+        const data = await getCurrentUser()
+        if (data.success && data.user) {
+          setUser(data.user)
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+        }
+      } catch (_) {}
     }
     if (company) {
       const c = findCompanyById(company.id)
@@ -143,7 +221,7 @@ export function AuthProvider({ children }) {
     admin,
     loading,
     isAuthenticated: !!(user || company || admin),
-    role: user ? 'user' : company ? 'company' : admin ? 'admin' : null,
+    role: user ? (user.role || 'user') : company ? 'company' : admin ? 'admin' : null,
     login,
     signup,
     logout,

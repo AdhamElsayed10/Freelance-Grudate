@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { Mail, Lock, ArrowLeft } from 'lucide-react'
+import { Mail, Lock, ArrowLeft, Loader2 } from 'lucide-react'
 
 export default function Login() {
   const { login } = useAuth()
@@ -12,19 +12,41 @@ export default function Login() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '', role: 'user' })
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const result = login(form.email, form.password, form.role)
-    if (result.success) {
-      if (form.role === 'admin') navigate('/dashboard/admin')
-      else if (form.role === 'company') navigate('/dashboard/company')
-      else navigate('/dashboard/user')
-    } else {
-      setError(t('auth', result.error))
+    setIsLoading(true)
+
+    try {
+     const result = await login(
+   form.email,
+   form.password,
+   form.role
+)
+  if (result.success) {
+
+  if (result.user.role === 'admin') {
+    navigate('/dashboard/admin')
+  }
+
+  else if (result.user.role === 'company') {
+    navigate('/dashboard/company')
+  }
+
+  else {
+    navigate('/dashboard/user')
+  }
+} else {
+    setError(result.error || t('auth', 'invalid_credentials'))
+}
+    } catch (err) {
+      setError(t('auth', 'invalid_credentials'))
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -63,7 +85,8 @@ export default function Login() {
                   <div className="relative">
                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
                     <input type="email" name="email" value={form.email} onChange={handleChange} required
-                      className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark outline-none transition-all input-focus"
+                      disabled={isLoading}
+                      className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark outline-none transition-all input-focus disabled:opacity-50"
                       placeholder="admin@mustakleen.com" />
                   </div>
                 </div>
@@ -72,7 +95,8 @@ export default function Login() {
                   <div className="relative">
                     <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
                     <input type="password" name="password" value={form.password} onChange={handleChange} required
-                      className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark outline-none transition-all input-focus"
+                      disabled={isLoading}
+                      className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark outline-none transition-all input-focus disabled:opacity-50"
                       placeholder="••••••" />
                   </div>
                 </div>
@@ -83,8 +107,16 @@ export default function Login() {
                   </motion.p>
                 )}
 
-                <button type="submit" className="w-full bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-gold/20 transition-all">
-                  {t('login', 'submit')}
+                <button type="submit" disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-gold/20 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      <span>{t('login', 'loading') || 'جاري الدخول...'}</span>
+                    </>
+                  ) : (
+                    t('login', 'submit')
+                  )}
                 </button>
 
                 <p className="text-center text-goldLight/50 text-sm">

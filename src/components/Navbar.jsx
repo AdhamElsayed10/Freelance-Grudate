@@ -17,7 +17,7 @@ export default function Navbar() {
   }, [location])
 
   const dashboardLink = role === 'admin' ? '/dashboard/admin' : role === 'company' ? '/dashboard/company' : '/dashboard/user'
-  const displayName = (user?.name && (td('users', user.name) || user.name)) || (company?.name && (td('companies', company.name, 'name') || company.name)) || admin?.email || ''
+  const displayName = (user?.fullName || user?.name && (td('users', user.name) || user.name)) || (company?.name && (td('companies', company.name, 'name') || company.name)) || admin?.email || ''
 
   const navItems = [
     { label: t('navbar', 'home'), href: '/' },

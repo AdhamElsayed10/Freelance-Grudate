@@ -19,25 +19,35 @@ export default function Join() {
     resolver: zodResolver(registerSchema),
   });
 
+  // ✅ submit function الصحيح
   const onSubmit = async (data) => {
     try {
       setLoading(true);
       setServerError("");
       setSuccess("");
 
+      // إرسال البيانات للـ backend
       const response = await registerUser(data);
 
+      console.log("SUCCESS:", response);
+
+      // حفظ التوكن
+      localStorage.setItem("token", response.token);
+
+      // حفظ المستخدم
       localStorage.setItem(
-        "token",
-        response.token
+        "user",
+        JSON.stringify(response.user)
       );
 
-      setSuccess("تم إنشاء الحساب بنجاح");
+      setSuccess("تم إنشاء الحساب بنجاح 🎉");
 
       reset();
-    } catch (error) {
+    } catch (err) {
+      console.log(err);
+
       setServerError(
-        error?.response?.data?.message ||
+        err?.response?.data?.message ||
           "حدث خطأ أثناء التسجيل"
       );
     } finally {
@@ -57,34 +67,30 @@ export default function Join() {
           سجل الآن للاستفادة من التأمينات والخصومات الحصرية
         </p>
 
+        {/* Server Error */}
         {serverError && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
             {serverError}
           </div>
         )}
 
+        {/* Success Message */}
         {success && (
           <div className="bg-green-100 text-green-700 p-3 rounded mb-4">
             {success}
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
           {/* Full Name */}
           <div>
-            <label className="block mb-1 font-medium">
-              الاسم الكامل
-            </label>
-
+            <label className="block mb-1 font-medium">الاسم الكامل</label>
             <input
               type="text"
               {...register("fullName")}
               className="w-full border rounded-lg p-3"
             />
-
             {errors.fullName && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.fullName.message}
@@ -94,16 +100,12 @@ export default function Join() {
 
           {/* Email */}
           <div>
-            <label className="block mb-1 font-medium">
-              البريد الإلكتروني
-            </label>
-
+            <label className="block mb-1 font-medium">البريد الإلكتروني</label>
             <input
               type="email"
               {...register("email")}
               className="w-full border rounded-lg p-3"
             />
-
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.email.message}
@@ -112,55 +114,67 @@ export default function Join() {
           </div>
 
           {/* Phone */}
-          <div>
-            <label className="block mb-1 font-medium">
-              رقم الهاتف
-            </label>
+<div>
+  <label className="block mb-1 font-medium text-gray-700">
+    رقم الهاتف
+  </label>
 
-            <input
-              type="text"
-              {...register("phone")}
-              className="w-full border rounded-lg p-3"
-            />
+  <input
+    type="text"
+    inputMode="numeric"
+    maxLength={11}
+    {...register("phone")}
+    onInput={(e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 11);
+    }}
+    className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+    placeholder="01xxxxxxxxx"
+  />
 
-            {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.phone.message}
-              </p>
-            )}
-          </div>
+  {errors.phone && (
+    <p className="text-red-500 text-sm mt-1">
+      {errors.phone.message}
+    </p>
+  )}
+</div>
 
-          {/* National ID */}
-          <div>
-            <label className="block mb-1 font-medium">
-              الرقم القومي
-            </label>
+{/* National ID */}
+<div>
+  <label className="block mb-1 font-medium text-gray-700">
+    الرقم القومي
+  </label>
 
-            <input
-              type="text"
-              {...register("nationalId")}
-              className="w-full border rounded-lg p-3"
-            />
+  <input
+    type="text"
+    inputMode="numeric"
+    maxLength={14}
+    {...register("nationalId")}
+    onInput={(e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 14);
+    }}
+    className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+    placeholder="14 رقم"
+  />
 
-            {errors.nationalId && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.nationalId.message}
-              </p>
-            )}
-          </div>
+  {errors.nationalId && (
+    <p className="text-red-500 text-sm mt-1">
+      {errors.nationalId.message}
+    </p>
+  )}
+</div>
 
           {/* Profession */}
           <div>
-            <label className="block mb-1 font-medium">
-              التخصص
-            </label>
-
+            <label className="block mb-1 font-medium">التخصص</label>
             <input
               type="text"
               {...register("profession")}
               className="w-full border rounded-lg p-3"
             />
-
             {errors.profession && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.profession.message}
@@ -170,16 +184,12 @@ export default function Join() {
 
           {/* Governorate */}
           <div>
-            <label className="block mb-1 font-medium">
-              المحافظة
-            </label>
-
+            <label className="block mb-1 font-medium">المحافظة</label>
             <input
               type="text"
               {...register("governorate")}
               className="w-full border rounded-lg p-3"
             />
-
             {errors.governorate && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.governorate.message}
@@ -189,16 +199,12 @@ export default function Join() {
 
           {/* Password */}
           <div>
-            <label className="block mb-1 font-medium">
-              كلمة المرور
-            </label>
-
+            <label className="block mb-1 font-medium">كلمة المرور</label>
             <input
               type="password"
               {...register("password")}
               className="w-full border rounded-lg p-3"
             />
-
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.password.message}
@@ -206,14 +212,13 @@ export default function Join() {
             )}
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center"
           >
-            {loading
-              ? "جاري التسجيل..."
-              : "إنشاء الحساب"}
+            {loading ? "جاري التسجيل..." : "إنشاء الحساب"}
           </button>
         </form>
       </div>

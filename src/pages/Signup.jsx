@@ -10,14 +10,14 @@ import { User, Briefcase, Mail, Lock, ArrowLeft, MapPin, Check, Smartphone, Cred
 const STEPS = ['stepInfo', 'stepPlan', 'stepPayment']
 
 const PAYMENT_METHODS = [
-  { id: 'vodafone_cash',    icon: Smartphone, nameKey: 'vodafoneCash',     descKey: 'vodafoneCashDesc' },
-  { id: 'credit_card',      icon: CreditCard,  nameKey: 'creditCard',      descKey: 'creditCardDesc' },
-  { id: 'bank_transfer',    icon: Building2,   nameKey: 'bankTransfer',    descKey: 'bankTransferDesc' },
-  { id: 'instapay',         icon: QrCode,      nameKey: 'instaPay',        descKey: 'instaPayDesc' },
+  { id: 'vodafone_cash', icon: Smartphone, nameKey: 'vodafoneCash', descKey: 'vodafoneCashDesc' },
+  { id: 'credit_card', icon: CreditCard, nameKey: 'creditCard', descKey: 'creditCardDesc' },
+  { id: 'bank_transfer', icon: Building2, nameKey: 'bankTransfer', descKey: 'bankTransferDesc' },
+  { id: 'instapay', icon: QrCode, nameKey: 'instaPay', descKey: 'instaPayDesc' },
 ]
 
 const PLAN_PRICES = { free: 0, premium: 99, elite: 199 }
-const PLAN_ICONS  = { free: Shield, premium: Zap, elite: Crown }
+const PLAN_ICONS = { free: Shield, premium: Zap, elite: Crown }
 
 export default function Signup() {
   const { signup } = useAuth()
@@ -96,44 +96,73 @@ export default function Signup() {
     doSignup()
   }
 
-  const doSignup = () => {
-    setProcessing(false)
-    const result = signup({
-      name: form.name, email: form.email, phone: form.phone, nationalId: form.nationalId, job: form.job, password: form.password,
-      plan: form.plan, role: 'user',
-      governorate: form.governorate,
-      center_id: isElite ? form.selectedMedicalCenter || undefined : undefined,
-      bank_id: isElite ? form.selectedBank || undefined : undefined,
-    })
-    if (result.success) navigate('/dashboard/user')
-    else setError(result.error)
-  }
+  const doSignup = async () => {
+    setError('');
+    setProcessing(true);
 
-  const handleCompanySubmit = (e) => {
+    try {
+      // 🌟 الـ Payload يتطابق مع توقيع AuthContext.signup()
+      const payload = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        nationalId: form.nationalId,
+        job: form.job,
+        password: form.password,
+        governorate: form.governorate,
+        plan: form.plan,
+        role: 'user',
+      };
+
+      console.log("📦 SENDING TO BACKEND:", payload);
+
+      const result = await signup(payload);
+
+      console.log("✅ RESPONSE FROM BACKEND:", result);
+
+      if (result.success) {
+        navigate('/dashboard/user');
+      } else {
+        setError(result.error || result.message || "Registration failed");
+      }
+
+    } catch (err) {
+      console.log("❌ ERROR:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Registration failed");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleCompanySubmit = async (e) => {
     e.preventDefault()
     setError('')
-    const result = signup({
-      name: form.companyName,
-      email: form.companyEmail,
-      password: form.companyName + '123', // auto-generated password
-      job: form.companyCategory,
-      role: 'company',
-    })
-    if (result.success) navigate('/dashboard/company')
-    else setError(result.error)
+    try {
+      const result = await signup({
+        name: form.companyName,
+        email: form.companyEmail,
+        password: form.companyName + '123', // auto-generated password
+        job: form.companyCategory,
+        role: 'company',
+      })
+      if (result.success) navigate('/dashboard/company')
+      else setError(result.error)
+    } catch (err) {
+      setError(err.response?.data?.message || 'حدث خطأ أثناء التسجيل')
+    }
   }
 
   // ── Animations ───────────────────────────────────────────────
   const slideVariants = {
-    enter:  (d) => ({ x: d > 0 ? 300 : -300, opacity: 0 }),
+    enter: (d) => ({ x: d > 0 ? 300 : -300, opacity: 0 }),
     center: { x: 0, opacity: 1 },
-    exit:   (d) => ({ x: d > 0 ? -300 : 300, opacity: 0 }),
+    exit: (d) => ({ x: d > 0 ? -300 : 300, opacity: 0 }),
   }
 
   const fadeVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    exit:    { opacity: 0, y: -20 },
+    exit: { opacity: 0, y: -20 },
   }
 
   // ── Role Selection Screen ──────────────────────────────────
@@ -202,7 +231,6 @@ export default function Signup() {
 
               <div className="bg-white/5 backdrop-blur-xl p-8 rounded-3xl border border-gold/20">
                 <form onSubmit={handleCompanySubmit} className="space-y-4">
-                  {/* Role badge */}
                   <div className="text-center mb-4">
                     <span className="inline-flex items-center gap-2 bg-gold/20 text-goldLight px-4 py-1.5 rounded-full text-xs font-bold">
                       🏢 {t('signup', 'company')}
@@ -301,7 +329,7 @@ export default function Signup() {
                     </div>
                   </div>
 
-                  {/* Website (optional) */}
+                  {/* Website */}
                   <div>
                     <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'companyWebsite')}</label>
                     <div className="relative">
@@ -315,9 +343,7 @@ export default function Signup() {
                   {/* Checkboxes */}
                   <div className="pt-4 border-t border-gold/20 space-y-4">
                     <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                        form.hasCommercialReg ? 'bg-gold border-gold' : 'border-gold/30 group-hover:border-gold/60'
-                      }`}>
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${form.hasCommercialReg ? 'bg-gold border-gold' : 'border-gold/30 group-hover:border-gold/60'}`}>
                         {form.hasCommercialReg && <Check size={14} className="text-dark" />}
                       </div>
                       <input type="checkbox" name="hasCommercialReg" checked={form.hasCommercialReg} onChange={handleChange} className="hidden" />
@@ -325,9 +351,7 @@ export default function Signup() {
                     </label>
 
                     <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                        form.hasTaxCard ? 'bg-gold border-gold' : 'border-gold/30 group-hover:border-gold/60'
-                      }`}>
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${form.hasTaxCard ? 'bg-gold border-gold' : 'border-gold/30 group-hover:border-gold/60'}`}>
                         {form.hasTaxCard && <Check size={14} className="text-dark" />}
                       </div>
                       <input type="checkbox" name="hasTaxCard" checked={form.hasTaxCard} onChange={handleChange} className="hidden" />
@@ -382,9 +406,7 @@ export default function Signup() {
             <div className="flex items-center justify-center gap-2 mb-8">
               {stepIndicators.map((s, i) => (
                 <div key={s.key} className="flex items-center gap-2">
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    s.active ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight/40'
-                  }`}>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${s.active ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight/40'}`}>
                     {i < step ? <Check size={12} /> : <span>{i + 1}</span>}
                     <span className="hidden sm:inline">{s.label}</span>
                   </div>
@@ -414,7 +436,7 @@ export default function Signup() {
                           placeholder={t('signup', 'namePlaceholder')} />
                       </div>
                     </div>
-                     <div>
+                    <div>
                       <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'emailLabel')}</label>
                       <div className="relative">
                         <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
@@ -427,18 +449,38 @@ export default function Signup() {
                       <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'phoneLabel')}</label>
                       <div className="relative">
                         <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
-                        <input type="tel" name="phone" value={form.phone} onChange={handleChange}
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={form.phone}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "").slice(0, 11);
+                            setForm({ ...form, phone: value });
+                          }}
+                          maxLength={11}
+                          inputMode="numeric"
                           className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark placeholder-dark/40 outline-none input-focus"
-                          placeholder={t('signup', 'phonePlaceholder')} />
+                          placeholder={t('signup', 'phonePlaceholder')}
+                        />
                       </div>
                     </div>
                     <div>
                       <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'nationalIdLabel')}</label>
                       <div className="relative">
                         <UserCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-gold/50" size={18} />
-                        <input type="text" name="nationalId" value={form.nationalId} onChange={handleChange}
+                        <input
+                          type="text"
+                          name="nationalId"
+                          value={form.nationalId}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "").slice(0, 14);
+                            setForm({ ...form, nationalId: value });
+                          }}
+                          maxLength={14}
+                          inputMode="numeric"
                           className="w-full bg-white/90 border-0 rounded-xl px-12 py-3.5 text-dark placeholder-dark/40 outline-none input-focus"
-                          placeholder={t('signup', 'nationalIdPlaceholder')} />
+                          placeholder={t('signup', 'nationalIdPlaceholder')}
+                        />
                       </div>
                     </div>
                     <div>
@@ -482,12 +524,8 @@ export default function Signup() {
                       const selected = form.plan === p
                       return (
                         <button key={p} type="button" onClick={() => setForm({ ...form, plan: p, selectedMedicalCenter: '', selectedBank: '' })}
-                          className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 text-right transition-all ${
-                            selected ? 'border-gold bg-gold/10' : 'border-white/10 bg-white/5 hover:border-gold/30'
-                          }`}>
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            selected ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight'
-                          }`}>
+                          className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 text-right transition-all ${selected ? 'border-gold bg-gold/10' : 'border-white/10 bg-white/5 hover:border-gold/30'}`}>
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${selected ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight'}`}>
                             <Icon size={24} />
                           </div>
                           <div className="flex-1">
@@ -506,14 +544,12 @@ export default function Signup() {
                       )
                     })}
 
-                    {/* ── Elite extras: Medical Center + Bank ─────────────── */}
+                    {/* Elite extras */}
                     {isElite && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-4 pt-2 overflow-hidden">
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-2 overflow-hidden">
                         <div className="border-t border-gold/20 pt-4">
                           <p className="text-goldLight/70 text-xs text-center mb-4">{t('signup', 'medicalCenterLabel')}</p>
                           <div className="space-y-4">
-                            {/* Medical Center */}
                             <div>
                               <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'medicalCenterLabel')}</label>
                               <div className="relative">
@@ -530,7 +566,6 @@ export default function Signup() {
                               </div>
                             </div>
 
-                            {/* Bank */}
                             <div>
                               <label className="block text-goldLight font-semibold mb-2 text-sm">{t('signup', 'bankLabel')}</label>
                               <div className="relative">
@@ -553,105 +588,46 @@ export default function Signup() {
                   </motion.div>
                 )}
 
-                {/* Step 2 — Payment Method */}
+                {/* Step 2 — Payment Methods */}
                 {step === 2 && (
                   <motion.div key="step2" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
-                    {/* Plan summary */}
-                    <div className="bg-gold/10 border border-gold/20 rounded-2xl p-4 text-center">
-                      <p className="text-goldLight/60 text-xs">{t('signup', 'planLabel')}</p>
-                      <p className="text-white font-bold text-lg">
-                        {form.plan === 'free' ? t('signup', 'freePlan') : form.plan === 'premium' ? t('signup', 'premiumPlan') : t('signup', 'elitePlan')}
-                      </p>
-                      <p className="text-gold text-2xl font-extrabold">{PLAN_PRICES[form.plan]} <span className="text-sm font-normal text-goldLight/60">{t('pricing', 'egp')}</span></p>
+                    <p className="text-goldLight/60 text-sm text-center mb-2">{t('signup', 'paymentLabel')}</p>
+                    <div className="grid grid-cols-1 gap-3">
+                      {PAYMENT_METHODS.map(m => {
+                        const Icon = m.icon
+                        const selected = paymentMethod === m.id
+                        return (
+                          <button key={m.id} type="button" onClick={() => setPaymentMethod(m.id)}
+                            className={`flex items-center gap-4 p-4 rounded-xl border-2 text-right transition-all ${selected ? 'border-gold bg-gold/10' : 'border-white/10 bg-white/5 hover:border-gold/30'}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selected ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight'}`}>
+                              <Icon size={20} />
+                            </div>
+                            <div>
+                              <p className={`font-bold text-sm ${selected ? 'text-gold' : 'text-goldLight'}`}>{t('signup', m.nameKey)}</p>
+                              <p className="text-goldLight/40 text-xs mt-0.5">{t('signup', m.descKey)}</p>
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
-
-                    {isPaidPlan && (
-                      <>
-                        <p className="text-goldLight/60 text-sm text-center">{t('signup', 'selectPayment')}</p>
-                        {PAYMENT_METHODS.map(m => {
-                          const Icon = m.icon
-                          const selected = paymentMethod === m.id
-                          return (
-                            <button key={m.id} type="button" onClick={() => setPaymentMethod(m.id)}
-                              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-right transition-all ${
-                                selected ? 'border-gold bg-gold/10' : 'border-white/10 bg-white/5 hover:border-gold/30'
-                              }`}>
-                              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                                selected ? 'bg-gold text-dark' : 'bg-white/10 text-goldLight'
-                              }`}>
-                                <Icon size={22} />
-                              </div>
-                              <div className="flex-1">
-                                <p className={`font-bold text-sm ${selected ? 'text-gold' : 'text-goldLight'}`}>
-                                  {t('signup', m.nameKey)}
-                                </p>
-                                <p className="text-goldLight/40 text-xs mt-0.5">{t('signup', m.descKey)}</p>
-                              </div>
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                selected ? 'border-gold bg-gold' : 'border-white/20'
-                              }`}>
-                                {selected && <Check size={12} className="text-dark" />}
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </>
-                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Error */}
-              {error && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="text-red-400 text-sm text-center bg-red-500/10 rounded-xl py-3 mt-4">
-                  {error}
-                </motion.p>
-              )}
+              {error && <p className="text-red-400 text-sm text-center bg-red-500/10 rounded-xl py-3 mt-4">{error}</p>}
 
-              {/* Processing overlay */}
-              {processing && (
-                <div className="flex flex-col items-center gap-3 mt-6 py-8">
-                  <div className="w-10 h-10 border-4 border-gold/30 border-t-gold rounded-full animate-spin" />
-                  <p className="text-goldLight text-sm">{t('signup', 'processingPayment')}</p>
-                </div>
-              )}
+              {/* Wizard Action Buttons */}
+              <div className="flex gap-4 mt-8 pt-4 border-t border-gold/10">
+                <button type="button" onClick={handleBack}
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-goldLight py-3.5 rounded-xl font-bold border border-gold/10 transition-all">
+                  {t('signup', 'back')}
+                </button>
 
-              {/* Navigation buttons */}
-              {!processing && (
-                <div className="flex items-center gap-3 mt-6">
-                  {step > 0 && (
-                    <button type="button" onClick={handleBack}
-                      className="flex-1 bg-white/10 text-goldLight py-3.5 rounded-xl font-bold text-sm hover:bg-white/15 transition-all">
-                      {t('signup', 'back')}
-                    </button>
-                  )}
-                  {step < STEPS.length - 1 ? (
-                    <button type="button" onClick={handleNext} disabled={!canGoNext()}
-                      className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${
-                        canGoNext()
-                          ? 'bg-gradient-to-r from-gold to-[#a67c3d] text-dark hover:shadow-lg hover:shadow-gold/20'
-                          : 'bg-white/10 text-goldLight/40 cursor-not-allowed'
-                      }`}>
-                      {t('signup', 'next')}
-                    </button>
-                  ) : (
-                    <button type="button" onClick={handleSubmit}
-                      disabled={isPaidPlan && !paymentMethod}
-                      className={`flex-1 py-3.5 rounded-xl font-bold text-sm transition-all ${
-                        (!isPaidPlan || paymentMethod)
-                          ? 'bg-gradient-to-r from-gold to-[#a67c3d] text-dark hover:shadow-lg hover:shadow-gold/20'
-                          : 'bg-white/10 text-goldLight/40 cursor-not-allowed'
-                      }`}>
-                      {form.plan === 'free' ? t('signup', 'subscribeFree') : t('signup', 'subscribe')}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <p className="text-center text-goldLight/50 text-sm mt-6">
-                {t('signup', 'hasAccount')} <Link to="/login" className="text-gold hover:text-goldLight transition-colors font-semibold">{t('signup', 'loginLink')}</Link>
-              </p>
+                <button type="button" onClick={handleNext} disabled={processing || (step === 2 && !paymentMethod)}
+                  className="flex-1 bg-gradient-to-r from-gold to-[#a67c3d] text-dark py-3.5 rounded-xl font-bold hover:shadow-xl hover:shadow-gold/20 transition-all disabled:opacity-50">
+                  {processing ? "..." : step === 2 || !isPaidPlan && step === 1 ? t('signup', 'submitIndividual') : t('signup', 'next')}
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
