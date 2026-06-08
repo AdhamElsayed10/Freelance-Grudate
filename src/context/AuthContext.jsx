@@ -89,6 +89,10 @@ export function AuthProvider({ children }) {
         }
         return { error: data.message || 'invalid_credentials' }
       } catch (err) {
+        // Network errors (server down, no response) vs actual API errors
+        if (!err.response) {
+          return { error: 'تعذر الاتصال بالخادم. تأكد من تشغيل الباك اند (Backend).' }
+        }
         const msg = err.response?.data?.message || 'invalid_credentials'
         return { error: msg }
       }
@@ -140,6 +144,7 @@ export function AuthProvider({ children }) {
           profession: job,
           governorate,
           password,
+          plan: plan || 'free',
         })
 
         if (data.success && data.token) {
@@ -153,6 +158,9 @@ export function AuthProvider({ children }) {
         }
         return { error: data.message || 'registration_failed' }
       } catch (err) {
+        if (!err.response) {
+          return { error: 'تعذر الاتصال بالخادم. تأكد من تشغيل الباك اند (Backend).' }
+        }
         const msg = err.response?.data?.message || 'registration_failed'
         return { error: msg }
       }

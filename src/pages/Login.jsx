@@ -22,27 +22,23 @@ export default function Login() {
     setIsLoading(true)
 
     try {
-     const result = await login(
-   form.email,
-   form.password,
-   form.role
-)
-  if (result.success) {
+      const result = await login(form.email, form.password, form.role)
 
-  if (result.user.role === 'admin') {
-    navigate('/dashboard/admin')
-  }
+      if (result.success) {
+        // Determine the actual role from whichever object was returned
+        const userObj = result.user || result.company || result.admin
+        const userRole = userObj?.role || form.role
 
-  else if (result.user.role === 'company') {
-    navigate('/dashboard/company')
-  }
-
-  else {
-    navigate('/dashboard/user')
-  }
-} else {
-    setError(result.error || t('auth', 'invalid_credentials'))
-}
+        if (userRole === 'admin') {
+          navigate('/dashboard/admin')
+        } else if (userRole === 'company') {
+          navigate('/dashboard/company')
+        } else {
+          navigate('/dashboard/user')
+        }
+      } else {
+        setError(result.error || t('auth', 'invalid_credentials'))
+      }
     } catch (err) {
       setError(t('auth', 'invalid_credentials'))
     } finally {
@@ -128,9 +124,10 @@ export default function Login() {
               {/* Demo credentials */}
               <div className="mt-6 pt-6 border-t border-gold/10 text-xs text-goldLight/40">
                 <p className="mb-2 font-semibold text-goldLight/60">{t('login', 'demoLabel')}</p>
-                <p>مستخدم: ahmed@example.com / 123456</p>
-                <p>شركة: info@shifa.com / 123456</p>
+                <p>مستخدم: ahmed@example.com / 12345678</p>
+                <p>شركة: info@shifa.com / 12345678</p>
                 <p>مشرف: admin@mustakleen.com / admin123</p>
+                <p className="mt-2 text-goldLight/30">⚠️ يجب أن تكون كلمة المرور 8 أحرف فأكثر</p>
               </div>
             </div>
           </motion.div>
